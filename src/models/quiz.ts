@@ -8,6 +8,7 @@ export enum QuizStatus {
 }
 
 export interface IQuiz {
+  title: string;
   brotherId: mongoose.Types.ObjectId;
   sisterId: mongoose.Types.ObjectId;
   status: QuizStatus;
@@ -15,13 +16,18 @@ export interface IQuiz {
 }
 
 const quizSchema = new Schema<IQuiz>(
-  {
-    brotherId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    sisterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  {      
+    title: {         
+      type: String,
+      required: true
+    },
+    brotherId: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // brother will create the quiz
+    sisterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // which sister can attend the quiz
     status: { type: String, enum: Object.values(QuizStatus), default: QuizStatus.PENDING },
     questions: [questionSchema], // Questions are nested directly in the Quiz
   },
   { timestamps: true }
 );
+
 
 export const Quiz = mongoose.model<IQuiz>('Quiz', quizSchema);
