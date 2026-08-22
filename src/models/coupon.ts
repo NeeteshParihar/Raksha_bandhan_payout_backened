@@ -51,4 +51,6 @@ const couponSchema = new Schema<ICoupon>(
   }
 );
 
+couponSchema.index({ brotherId: 1, sisterId: 1 });
+
 export const Coupon = mongoose.model<ICoupon>('Coupon', couponSchema);
