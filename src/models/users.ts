@@ -7,9 +7,11 @@ export enum UserRole {
 
 export interface IUser {
   phoneNumber: string;
+  countryCode?: string;
   name: string;
   password?: string;
   role: UserRole;
+  brotherId?: mongoose.Types.ObjectId; 
 }
 
 const userSchema = new Schema<IUser>(
@@ -19,6 +21,10 @@ const userSchema = new Schema<IUser>(
       required: true,
       unique: true,
       index: true,
+    },
+    countryCode: {
+      type: String,
+      default: "+91"
     },
     name: {
       type: String,
@@ -36,6 +42,13 @@ const userSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       required: true,
     },
+    brotherId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: function ( this: IUser ) {
+        return this.role === UserRole.SISTER;
+      }     
+    },
   },
   {
     timestamps: true,
@@ -43,3 +56,5 @@ const userSchema = new Schema<IUser>(
 );
 
 export const User = mongoose.model<IUser>('User', userSchema);
+
+
