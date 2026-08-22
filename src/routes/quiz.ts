@@ -1,15 +1,23 @@
 import { Router } from 'express';
+import { createQuiz, getQuiz, getAllQuizesOfSister, addQuestionToQuiz } from '../controllers/quiz.js';
+import { validateUser } from '../middlewares/validateUser.js';
+import  { UserRole } from '../models/users.js';
+
+import upload from '../config/cloundinary.js';
 
 const router = Router();
 
 // Create a new quiz with questions (Brother action)
-router.post('/', (req, res) => {
-  res.send('Create Quiz API');
-});
+router.post('/', validateUser, createQuiz);
 
-// Fetch quiz state including questions (Sister action)
-router.get('/:id', (req, res) => {
-  res.send('Get Quiz State API');
-});
+// Fetch all quizzes for a specific sister (Brother action)
+router.get('/sister/:sisterId', validateUser, getAllQuizesOfSister);
+
+// Fetch single quiz state including questions (Brother or Sister action)
+router.get('/:quizId', validateUser, getQuiz);
+
+// add question in the quiz
+router.post("/:quizId/question", validateUser(UserRole.BROTHER), upload.any(), addQuestionToQuiz);
 
 export default router;
+

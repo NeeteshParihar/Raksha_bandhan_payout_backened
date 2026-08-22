@@ -12,7 +12,7 @@ export interface IQuiz {
   brotherId: mongoose.Types.ObjectId;
   sisterId: mongoose.Types.ObjectId;
   status: QuizStatus;
-  questions: IQuestion[];
+  questions?: IQuestion[];
 }
 
 const quizSchema = new Schema<IQuiz>(
@@ -24,7 +24,10 @@ const quizSchema = new Schema<IQuiz>(
     brotherId: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // brother will create the quiz
     sisterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // which sister can attend the quiz
     status: { type: String, enum: Object.values(QuizStatus), default: QuizStatus.PENDING },
-    questions: [questionSchema], // Questions are nested directly in the Quiz
+    questions: {
+      type: [questionSchema], // Questions are nested directly in the Quiz
+      default: []  
+    }, 
   },
   { timestamps: true }
 );
