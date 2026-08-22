@@ -16,25 +16,54 @@ export enum QuestionLevel {
   LEGEND = 'LEGEND',   // hard
 }
 
+export interface IOption {
+  type: OptionType,
+  value: string,
+  publicId?: string
+}
+
+
 export interface IQuestion {
   _id?: mongoose.Types.ObjectId; // Automatically added by mongoose
   quesDesc: string;
   questionMediaUrl?: string;
-  questionType: QuestionType;
-  optionType: OptionType;
-  optionsList: string[]; // Included this for MCQ options
-  answerList: string[];
+  questionMediaId?: string;
+  questionType: QuestionType; 
+  optionsList: IOption[]; // Included this for MCQ options
+  answerList: string[]; 
   level: QuestionLevel;
   scoreAmount: number;
 }
 
+const optionSchema = new Schema<IOption>({
+  type: { type: String, enum: Object.values(OptionType), required: true },
+  value: {
+    type: String,
+    required: true
+  },
+  publicId: { type: String, required: false }
+});
+
+
 export const questionSchema = new Schema<IQuestion>({
   quesDesc: { type: String, required: true },
   questionMediaUrl: { type: String, required: false },
+  questionMediaId: { type: String, required: false },
   questionType: { type: String, enum: Object.values(QuestionType), required: true },
-  optionType: { type: String, enum: Object.values(OptionType), required: true },
-  optionsList: { type: [String], default: [] },
-  answerList: { type: [String], required: true },
+  optionsList: {
+    type: [optionSchema], default: []
+  },
+  answerList: { 
+    type: [String], 
+    required: true,
+    validate: [
+      (val: string[]) => val.length > 0, 
+      'A question must have at least one answer'
+    ]
+  }, 
   level: { type: String, enum: Object.values(QuestionLevel), default: QuestionLevel.NOOB },
   scoreAmount: { type: Number, required: true, min: 0 },
 });
+
+
+
