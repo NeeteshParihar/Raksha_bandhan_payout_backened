@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createCoupon, getCoupon, getSisterCoupon, deleteCoupon } from '../controllers/coupon.js';
+import { createCoupon, getCoupon, getSisterCoupon, deleteCoupon, editCoupon } from '../controllers/coupon.js';
 import { validateUser } from '../middlewares/validateUser.js';
 
 const router = Router();
@@ -16,12 +16,14 @@ router.get('/sister/:sisterId', validateUser, getSisterCoupon);
 // Delete a coupon
 router.delete('/:couponId', validateUser, deleteCoupon);
 
+// Edit a coupon
+router.patch('/:couponId', validateUser, editCoupon);
+
 // Apply a bonus coupon (Sister action)
 router.post('/apply', (req, res) => {
   res.send('Apply Coupon API');
 });
 
 export default router;
-
 
 

@@ -1,13 +1,13 @@
 import { Response, NextFunction } from 'express';
 import { IapiRequest } from '../utils/types.js';
 import { ApiError } from '../utils/error_handling.js';
-import { createCouponService, getCouponService, getSisterCouponService, deleteCouponService } from '../services/coupon.js';
+import { createCouponService, getCouponService, getSisterCouponService, deleteCouponService, editCouponService } from '../services/coupon.js';
 import { UserRole } from '../models/users.js';
 
 export const createCoupon = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
         const { sisterId, amount, expiry } = req.body;
-        
+
         // Ensure the requester is a logged-in brother
         const brotherId = req.user?.userId;
         const role = req.user?.role;
@@ -112,3 +112,38 @@ export const deleteCoupon = async (req: IapiRequest, res: Response, next: NextFu
         next(error);
     }
 };
+
+export const editCoupon = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const brotherId = req.user?.userId;
+        const role = req.user?.role;
+        const { couponId } = req.params;
+        const { amount, expiry } = req.body;
+
+        if (role !== UserRole.BROTHER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can edit coupons" });
+        }
+
+        if (!brotherId || !couponId) {
+            throw new ApiError({ statusCode: 400, message: "missing required fields (brotherId or couponId)" });
+        }
+
+        if( amount === undefined && expiry === undefined  ) throw new ApiError({ statusCode: 400, message: "Atleast one field is required!"});
+
+        const updatedCoupon = await editCouponService({
+            brotherId: String(brotherId),
+            couponId: couponId as string,
+            amount: amount,
+            expiry: expiry as Date | null  
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Coupon updated successfully",
+            data: updatedCoupon
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+

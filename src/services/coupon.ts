@@ -60,3 +60,41 @@ export const deleteCouponService = async (couponId: string, brotherId: string) =
     return true;
 };
 
+interface IEditCouponParams {
+    brotherId: string;
+    couponId: string;
+    amount?: number;
+    expiry?: Date | null;
+}
+
+export const editCouponService = async ({ brotherId, couponId, amount, expiry }: IEditCouponParams) => {
+    
+    const query = { brotherId, _id: couponId };    
+    const updateQuery: any = {
+        $set: {},
+    } 
+
+    const isDate = expiry != null? !isNaN(new Date(expiry).getTime()): null;
+    
+    if(amount ) updateQuery.$set.amount = amount;
+    if( expiry == null ) {
+        updateQuery.$unset = { expiry };
+    }else if( isDate ) {
+        updateQuery.$set.expiry = expiry;
+    }
+  
+    const updatedCoupon = await Coupon.findOneAndUpdate(
+        query,
+        updateQuery,
+        { returnDocument: 'after', runValidators: true }
+    );
+
+    if (!updatedCoupon) {
+        throw new ApiError({ 
+            statusCode: 404, 
+            message: "Coupon not found or you do not have permission to edit it" 
+        });
+    }
+
+    return updatedCoupon;
+};
