@@ -7,6 +7,12 @@ export enum QuizStatus {
   COMPLETED = 'COMPLETED',
 }
 
+export enum QuizActions {
+  START = "START",
+  SUBMIT = "SUBMIT",
+  RESET = "RESET"
+}
+
 export interface IQuiz {
   title: string;
   brotherId: mongoose.Types.ObjectId;
@@ -32,5 +38,6 @@ const quizSchema = new Schema<IQuiz>(
   { timestamps: true }
 );
 
+quizSchema.index({ brotherId: 1, sisterId: 1 }); 
 
 export const Quiz = mongoose.model<IQuiz>('Quiz', quizSchema);

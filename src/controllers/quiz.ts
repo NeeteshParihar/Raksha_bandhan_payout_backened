@@ -1,10 +1,12 @@
 import { Response, NextFunction } from 'express';
 import { IapiRequest } from '../utils/types.js';
 import { ApiError } from '../utils/error_handling.js';
-import { createQuizService, getQuizService, getAllQuizesOfSisterService, addQuestionToQuizService } from '../services/quiz.js';
+import { createQuizService, getQuizService, getAllQuizesOfSisterService, addQuestionToQuizService, deleteQuestionService, UpdateQuizStatusService } from '../services/quiz.js';
 import { parseQuestionData } from '../utils/quiz.js';
 import { UserRole } from '../models/users.js';
 import { deleteCloudinaryFiles } from '../services/cloudinary.js';
+import { QuizActions, QuizStatus } from '../models/quiz.js';
+import { deleteAllAttemptsOfQuizService } from '../services/attempt.js';
 
 export const createQuiz = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
@@ -120,3 +122,83 @@ export const addQuestionToQuiz = async (req: IapiRequest, res: Response, next: N
         next(error);
     }
 };
+
+export const deleteQuestion = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const { quizId, questionId } = req.params;
+
+       
+        
+        const brotherId = req.user?.userId;
+        const role = req.user?.role;
+
+        if (role !== UserRole.BROTHER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can delete questions" });
+        }
+
+        if (!brotherId || !quizId || !questionId) {
+            throw new ApiError({ statusCode: 400, message: "missing required fields (quizId, questionId)" });
+        }
+
+        
+
+        const deletedQuestion = await deleteQuestionService(quizId as string, String(brotherId), questionId as string);
+
+        // Delete uploaded files associated with this question from Cloudinary
+        const publicIds: string[] = [];
+        if (deletedQuestion.questionMediaId) {
+            publicIds.push(deletedQuestion.questionMediaId);
+        }
+        if (deletedQuestion.optionsList) {
+            deletedQuestion.optionsList.forEach(opt => {
+                if (opt.publicId) publicIds.push(opt.publicId);
+            });
+        }
+        
+        if (publicIds.length > 0) {
+            // Delete asynchronously without awaiting if we don't want to block the response,
+            // but awaiting is fine here.
+            await deleteCloudinaryFiles(publicIds);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Question deleted successfully"
+        });
+        
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateQuizStatus = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try{
+
+        const userId = req.user?.userId;
+        const role = req.user?.role;
+        const action: any = req.query.action;
+        const quizId: any = req.params.quizId;
+
+        let result: any;
+
+        if( action === QuizActions.START && role === UserRole.SISTER) {
+            result = await UpdateQuizStatusService(quizId, userId!,QuizStatus.IN_PROGRESS  );
+        }else if( action === QuizActions.SUBMIT && role === UserRole.SISTER) {
+            result = await UpdateQuizStatusService(quizId, userId!,QuizStatus.COMPLETED  );
+        }else if( action === QuizActions.RESET && role === UserRole.BROTHER) {
+            result = await UpdateQuizStatusService(quizId, userId!,QuizStatus.PENDING );
+            await deleteAllAttemptsOfQuizService(quizId as string);
+        }else {
+            throw new ApiError({ statusCode: 400, message: "User action is not valid"})
+        } 
+        res.status(200).json({
+            success: true,
+            message: "Status updated successfully!",
+            data: result
+        })
+    }catch(err) {
+        next(err);
+    }
+}
+
+

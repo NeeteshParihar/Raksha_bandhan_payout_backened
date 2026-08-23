@@ -17,14 +17,15 @@ export enum QuestionLevel {
 }
 
 export interface IOption {
-  type: OptionType,
-  value: string,
-  publicId?: string
+  type: OptionType;
+  value: string;
+  publicId?: string;
+  _id?: mongoose.Types.ObjectId | string
 }
 
 
 export interface IQuestion {
-  _id?: mongoose.Types.ObjectId; // Automatically added by mongoose
+  _id?: mongoose.Types.ObjectId | string; // Automatically added by mongoose
   quesDesc: string;
   questionMediaUrl?: string;
   questionMediaId?: string;
