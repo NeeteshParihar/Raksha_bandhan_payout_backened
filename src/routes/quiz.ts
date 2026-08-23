@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { createQuiz, getQuiz, getAllQuizesOfSister, addQuestionToQuiz } from '../controllers/quiz.js';
 import { validateUser } from '../middlewares/validateUser.js';
-import  { UserRole } from '../models/users.js';
+import { validateUserRole } from '../middlewares/validateUserRole.js';
+import { UserRole } from '../models/users.js';
 
 import upload from '../config/cloundinary.js';
 
@@ -17,7 +18,7 @@ router.get('/sister/:sisterId', validateUser, getAllQuizesOfSister);
 router.get('/:quizId', validateUser, getQuiz);
 
 // add question in the quiz
-router.post("/:quizId/question", validateUser(UserRole.BROTHER), upload.any(), addQuestionToQuiz);
+router.post("/:quizId/question", validateUser, validateUserRole(UserRole.BROTHER),  upload.any(), addQuestionToQuiz);
 
 export default router;
 

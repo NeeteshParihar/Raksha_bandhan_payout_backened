@@ -4,6 +4,7 @@ import { ApiError } from '../utils/error_handling.js';
 import { createQuizService, getQuizService, getAllQuizesOfSisterService, addQuestionToQuizService } from '../services/quiz.js';
 import { parseQuestionData } from '../utils/quiz.js';
 import { UserRole } from '../models/users.js';
+import { deleteCloudinaryFiles } from '../services/cloudinary.js';
 
 export const createQuiz = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
@@ -88,6 +89,9 @@ export const addQuestionToQuiz = async (req: IapiRequest, res: Response, next: N
         const brotherId = req.user?.userId;
         const role = req.user?.role;
 
+        console.log(role);
+        console.log(req.body);
+
         if (role !== UserRole.BROTHER) {
             throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can add questions to a quiz" });
         }
@@ -97,7 +101,6 @@ export const addQuestionToQuiz = async (req: IapiRequest, res: Response, next: N
         }
 
         const parsedQuestionData = parseQuestionData(req.body, req.files);
-        
         const newQuestion = await addQuestionToQuizService(quizId as string, String(brotherId), parsedQuestionData);
 
         res.status(201).json({
@@ -107,6 +110,13 @@ export const addQuestionToQuiz = async (req: IapiRequest, res: Response, next: N
         });
         
     } catch (error) {
+        if (req.files) {
+            const files = req.files as any[];
+            const publicIds = files.map(file => file.filename);
+            if (publicIds.length > 0) {
+                await deleteCloudinaryFiles(publicIds);
+            }
+        }
         next(error);
     }
 };

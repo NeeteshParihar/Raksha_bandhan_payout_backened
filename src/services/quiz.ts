@@ -2,6 +2,7 @@ import { Quiz, IQuiz, QuizStatus } from '../models/quiz.js';
 import { ApiError } from '../utils/error_handling.js';
 import { checkIsSister } from './user.js';
 import { IparsedQuestion } from '../utils/quiz.js';
+import { Schema, Types } from 'mongoose';
 
 interface ICreateQuizParams {
     title: string;
@@ -54,10 +55,12 @@ export const getQuizService = async (quizId: string, userId: string): Promise<IQ
 
 // "_id": "6a896c4031f2815e81699783",
  interface IAllQuizes {
-    title: string,
-    brotherId: string,
-    sisterId: string,
-    status: QuizStatus
+    _id?: Types.ObjectId;
+    title: string;
+    brotherId: Types.ObjectId;
+    sisterId: Types.ObjectId;
+    status: QuizStatus;
+     __v: number;
  }
 
 export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string): Promise<IAllQuizes[]> => {
