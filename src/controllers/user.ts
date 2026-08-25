@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { registerUserService, loginBrotherService, getUser } from '../services/user.js';
+import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId } from '../services/user.js';
 import { UserRole, User } from '../models/users.js';
 import { setAccessTokenCookie } from '../utils/jwt.js';
 import { ApiError } from '../utils/error_handling.js';
@@ -16,11 +16,10 @@ export const registerBrother = async (req: IapiRequest, res: Response, next: Nex
             throw new ApiError({ statusCode: 400, message: "missing required fields" });
         }
 
-        const user = await registerUserService({
+        const user = await registerBrotherService({
             phoneNumber,
             name,
             password,
-            role: UserRole.BROTHER,
         });
 
         // Automatically log the brother in by setting the JWT cookie
@@ -81,10 +80,9 @@ export const registerSister = async (req: IapiRequest, res: Response, next: Next
 
 
         // A sister is created by the brother, no password is required initially
-        const user = await registerUserService({
+        const user = await registerSisterService({
             phoneNumber,
             name,
-            role: UserRole.SISTER,
             brotherId,
         });
 
@@ -207,6 +205,30 @@ export const getProfile = async (req: IapiRequest, res: Response, next: NextFunc
             success: true,
             message: "Profile fetched successfully",
             data: user
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getSistersAccounts = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const brotherId = req.user?.userId;
+        if (!brotherId) {
+            throw new ApiError({ statusCode: 401, message: "Unauthorized" });
+        }
+        
+        if (req.user?.role !== UserRole.BROTHER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can fetch these accounts" });
+        }
+
+        const sisters = await getSistersByBrotherId(brotherId);
+
+        res.status(200).json({
+            success: true,
+            message: "Sisters accounts fetched successfully",
+            data: sisters
         });
 
     } catch (error) {

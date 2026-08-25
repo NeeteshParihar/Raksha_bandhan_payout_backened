@@ -62,6 +62,7 @@ This section provides a summary of all available API routes for the frontend app
 - **`GET /generate-invite/:sisterId`** - Generate encrypted invite link (Brother action).
 - **`POST /validate-invite`** - Validate encrypted invite link (Sister action).
 - **`GET /profile`** - Get User Profile (Requires Auth).
+- **`GET /sisters`** - Get all Sisters Accounts for the logged-in Brother (Brother action).
 
 ### 2. Quiz APIs (`/quiz`)
 - **`POST /`** - Create a new quiz (Brother action).

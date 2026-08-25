@@ -1,17 +1,15 @@
+import mongoose from "mongoose";
 import { ApiError } from "../utils/error_handling.js";
 import { User, UserRole } from "../models/users.js";
 import { hashPassword, comparePassword } from "../utils/bcrypt.js";
 
-interface RegisterUserParams {
+interface RegisterBrotherParams {
   phoneNumber: string;
   name: string;
-  role: UserRole;
   password?: string;
-  brotherId?: string;
 }
 
-export const registerUserService = async ({ phoneNumber, name, role, password, brotherId }: RegisterUserParams) => {
-  // Check if a user with this phone number already exists
+export const registerBrotherService = async ({ phoneNumber, name, password }: RegisterBrotherParams) => {
   const existingUser = await User.findOne({ phoneNumber });
   if (existingUser) {
     throw new ApiError({
@@ -20,26 +18,50 @@ export const registerUserService = async ({ phoneNumber, name, role, password, b
     });
   }
 
-  // Validate that brother provides a password
-  if (role === UserRole.BROTHER && !password) {
+  if (!password) {
     throw new ApiError({
       statusCode: 400,
       message: "Password is required for brothers",
     });
   }
 
-  // Hash the password if one is provided
-  let hashedPassword = password;
-  if (password) {   
-    hashedPassword = await hashPassword(password);
-  }
+  const hashedPassword = await hashPassword(password);
 
-  // Create and save the new user
   const newUser = await User.create({
     phoneNumber,
     name,
-    role,
+    role: UserRole.BROTHER,
     password: hashedPassword,
+  });
+
+  return {
+    _id: String(newUser._id),
+    countryCode: newUser.countryCode,
+    phoneNumber: newUser.phoneNumber,
+    name: newUser.name,
+    role: newUser.role,
+  };
+};
+
+interface RegisterSisterParams {
+  phoneNumber: string;
+  name: string;
+  brotherId: string;
+}
+
+export const registerSisterService = async ({ phoneNumber, name, brotherId }: RegisterSisterParams) => {
+  const existingUser = await User.findOne({ phoneNumber });
+  if (existingUser) {
+    throw new ApiError({
+      statusCode: 400,
+      message: "User with this phone number already exists",
+    });
+  }
+
+  const newUser = await User.create({
+    phoneNumber,
+    name,
+    role: UserRole.SISTER,
     brotherId,
   });
 
@@ -48,7 +70,8 @@ export const registerUserService = async ({ phoneNumber, name, role, password, b
     countryCode: newUser.countryCode,
     phoneNumber: newUser.phoneNumber,
     name: newUser.name,
-    role: newUser.role
+    role: newUser.role,
+    brotherId: newUser.brotherId ? String(newUser.brotherId) : undefined
   };
 };
 interface LoginBrotherParams {
@@ -110,3 +133,8 @@ export const getUser = async (id: string, selectAttributes?: string[]) => {
   }
   return await query;
 };
+
+export const getSistersByBrotherId = async (brotherId: string) => {
+  return await User.find({ brotherId, role: UserRole.SISTER }).select('-password').lean();
+};
+
