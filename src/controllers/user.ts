@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { registerUserService, loginBrotherService } from '../services/user.js';
+import { registerUserService, loginBrotherService, getUser } from '../services/user.js';
 import { UserRole, User } from '../models/users.js';
 import { setAccessTokenCookie } from '../utils/jwt.js';
 import { ApiError } from '../utils/error_handling.js';
@@ -40,6 +40,7 @@ export const registerBrother = async (req: IapiRequest, res: Response, next: Nex
 export const loginBrother = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
         const { phoneNumber, password } = req.body;
+        const countryCode = req.body.countryCode || "+91";
 
         if (!phoneNumber || !password) {
             throw new ApiError({ statusCode: 400, message: "missing required fields" });
@@ -47,6 +48,7 @@ export const loginBrother = async (req: IapiRequest, res: Response, next: NextFu
 
         const user = await loginBrotherService({
             phoneNumber,
+            countryCode,
             password
         });
 
@@ -180,6 +182,31 @@ export const loginSister = async (req: IapiRequest, res: Response, next: NextFun
             success: true,
             message: "Sister logged in successfully",
             data: sister
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getProfile = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            throw new ApiError({ statusCode: 401, message: "Unauthorized" });
+        }
+
+        const user = await getUser(userId, ['-password']);
+
+        if (!user) {
+            throw new ApiError({ statusCode: 404, message: "User not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Profile fetched successfully",
+            data: user
         });
 
     } catch (error) {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // controlers
-import { registerBrother, registerSister, loginBrother, getOtp, loginSister} from '../controllers/user.js';
+import { registerBrother, registerSister, loginBrother, getOtp, loginSister, getProfile} from '../controllers/user.js';
 
 // midleware
 import { validateUser } from '../middlewares/validateUser.js';
@@ -15,6 +15,9 @@ router.post('/register-sister', validateUser,  registerSister);
 
 // login brother
 router.post("/login-brother", loginBrother);
+
+// Get User Profile
+router.get("/profile", validateUser, getProfile);
 
 // getOtp for sister
 router.get("/get-otp/:sisterId", getOtp );

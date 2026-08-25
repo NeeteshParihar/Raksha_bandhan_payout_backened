@@ -53,12 +53,13 @@ export const registerUserService = async ({ phoneNumber, name, role, password, b
 };
 interface LoginBrotherParams {
   phoneNumber: string;
+  countryCode: string;
   password: string;
 }
 
-export const loginBrotherService = async ({ phoneNumber, password }: LoginBrotherParams) => {
+export const loginBrotherService = async ({ phoneNumber, countryCode, password }: LoginBrotherParams) => {
   
-  const user = await User.findOne({ phoneNumber });
+  const user = await User.findOne({ phoneNumber, countryCode });
   if (!user) {
     throw new ApiError({
       statusCode: 404,
