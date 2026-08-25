@@ -46,3 +46,43 @@ Upon reviewing the models, the architecture is extremely solid. Here are two min
 
 1. **Attempt Model Query Optimization**: Currently, `Attempt` only references `quizId`. If we ever need to query "All money earned by Sister X across all her quizzes", we'd have to join with the `Quiz` collection to filter by her ID. Adding `sisterId` directly to the `Attempt` model could slightly optimize analytical queries, though it's not strictly necessary right now since payouts are processed per-quiz.
 2. **Coupon Applied Tracking**: When a coupon's status changes to `APPLIED`, we currently don't track *which* payout it was applied to. We might want to add a `payoutId` (optional) to the Coupon model for better auditing, just in case there's ever a dispute about where the bonus money went.
+
+---
+
+## 🚀 Frontend API Documentation
+
+This section provides a summary of all available API routes for the frontend application. (Assume the base path like `/api/v1` is prefixed before these routes based on your main Express setup).
+
+### 1. User & Auth APIs (`/user`)
+- **`POST /register-brother`** - Register a new Brother account.
+- **`POST /login-brother`** - Login for Brother.
+- **`POST /register-sister`** - Register a Sister (Requires Brother auth).
+- **`GET /get-otp/:sisterId`** - Generate OTP for Sister login.
+- **`POST /login-sister`** - Login for Sister using OTP.
+- **`GET /generate-invite/:sisterId`** - Generate encrypted invite link (Brother action).
+- **`POST /validate-invite`** - Validate encrypted invite link (Sister action).
+- **`GET /profile`** - Get User Profile (Requires Auth).
+
+### 2. Quiz APIs (`/quiz`)
+- **`POST /`** - Create a new quiz (Brother action).
+- **`GET /sister/:sisterId`** - Fetch all quizzes for a specific sister (Brother action).
+- **`GET /:quizId`** - Fetch a single quiz state including questions (Brother/Sister action).
+- **`POST /:quizId/question`** - Add a question to a quiz (Brother action, supports file upload).
+- **`DELETE /:quizId/question/:questionId`** - Delete a question from a quiz (Brother action).
+- **`PATCH /:quizId`** - Update quiz status (Brother/Sister action).
+
+### 3. Attempt APIs (`/attempt`)
+- **`POST /:quizId/:questionId`** - Submit an answer for a specific question (Sister action).
+- **`GET /:quizId`** - Fetch all attempts for a specific quiz (Brother/Sister action).
+
+### 4. Coupon APIs (`/coupon`)
+- **`POST /`** - Create a bonus coupon (Brother action).
+- **`GET /`** - Get all coupons created by the brother.
+- **`GET /sister/:sisterId`** - Get all coupons for a specific sister (Brother action).
+- **`DELETE /:couponId`** - Delete a coupon.
+- **`PATCH /:couponId`** - Edit a coupon.
+- **`POST /apply`** - Apply a bonus coupon (Sister action).
+
+### 5. Payout APIs (`/payout`)
+- **`POST /request-otp`** - Request OTP for payout verification (Sister action).
+- **`POST /verify-and-pay`** - Verify OTP and trigger payout (Sister action).
