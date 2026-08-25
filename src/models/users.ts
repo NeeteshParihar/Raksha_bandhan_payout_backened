@@ -19,16 +19,22 @@ const userSchema = new Schema<IUser>(
     phoneNumber: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
+      trim: true,
+      match: [/^[0-9]+$/, 'Phone number should contain only digits'],
+      minlength: 10,
+      maxlength: 12
     },
     countryCode: {
       type: String,
-      default: "+91"
+      default: "+91",
+      trim: true,
     },
     name: {
       type: String,
       required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 100
     },
     password: {
       type: String,
@@ -54,6 +60,8 @@ const userSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
+
+userSchema.index({ countryCode: 1, phoneNumber: 1 }, { unique: true });
 
 export const User = mongoose.model<IUser>('User', userSchema);
 
