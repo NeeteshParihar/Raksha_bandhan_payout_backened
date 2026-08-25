@@ -3,6 +3,7 @@ import { ApiError } from '../utils/error_handling.js';
 import { checkIsSister } from './user.js';
 import { IparsedQuestion } from '../utils/quiz.js';
 import { Schema, Types } from 'mongoose';
+import { QuestionType } from '../models/question.js';
 
 interface ICreateQuizParams {
     title: string;
@@ -131,3 +132,56 @@ export const UpdateQuizStatusService = async (quizId: string, userId: string, st
     return quiz;
 }
 
+
+export const checkUserQuizQuestionAnswer = async (quizId: string, questionId: string, answerList: string[]) => {
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz)
+        throw new ApiError({ statusCode: 404, message: "quiz not found!" });
+    
+    const question = quiz.questions?.find((ques) => String(ques._id) === questionId);
+    if (!question)
+        throw new ApiError({ statusCode: 404, message: "question is not found inside the quiz!" });    
+    if (question.questionType === QuestionType.TEXT && answerList.length != 1)
+        throw new ApiError({ statusCode: 400, message: "Only one answer is allowed in case of TEXT typed questions" })
+
+    if (question.questionType === QuestionType.TEXT) {
+        const ans = answerList[0];
+        const result = question.answerList.includes(ans); // check agains variations in case of text answer
+
+        const amountEarned = result === true ? question.scoreAmount : 0;
+        return {
+            isCorrect: result,
+            amountEarned
+        }
+    }
+    // check the MCQ type : check strictly to ensure all the options are present in user answer
+    let result = true;
+    for (const savedAnswer of question.answerList) {
+        if (!answerList.includes(savedAnswer)) {
+            result = false;
+            break;
+        }
+    }
+
+    const amountEarned = result === true ? question.scoreAmount : 0;
+    return {
+        isCorrect: result,
+        amountEarned
+    }
+}
+
+interface IQuizOwers {
+    _id: string,
+    brotherId: string,
+    sisterId: string
+}
+
+export const getQuizOwners = async( quizId: string ): Promise<IQuizOwers> => {
+    const quiz = await Quiz.findById(quizId).select("brotherId sisterId");
+    if(!quiz) throw new ApiError({statusCode: 404, message: "quiz not found!"});
+    return {
+        _id: String(quiz._id),
+        brotherId: String(quiz.brotherId),
+        sisterId: String(quiz.sisterId)
+    };
+}
