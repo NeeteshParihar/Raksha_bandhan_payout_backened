@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId, deleteSisterAccountService } from '../services/user.js';
+import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId, deleteSisterAccountService, registerUserService, loginUserService } from '../services/user.js';
 import { UserRole, User } from '../models/users.js';
 import { setAccessTokenCookie } from '../utils/jwt.js';
 import { ApiError } from '../utils/error_handling.js';
@@ -99,31 +99,25 @@ export const registerSister = async (req: IapiRequest, res: Response, next: Next
 
 export const getOtp = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
-        const { sisterId } = req.params;
+        const { phoneNumber } = req.body;
+        const countryCode = req.body.countryCode || "+91";
 
-        if (!sisterId) {
+        if (!phoneNumber) {
             throw new ApiError({ statusCode: 400, message: "missing required fields" });
         }
 
-        const sister = await User.findById(sisterId);
-
-        if (!sister) {
-            throw new ApiError({ statusCode: 404, message: "Sister not found" });
+        const user = await User.findOne({ phoneNumber, countryCode });
+        
+        if (!user) {
+            throw new ApiError({ statusCode: 404, message: "User not found" });
         }
-
-        if (sister.role !== UserRole.SISTER) {
-             throw new ApiError({ statusCode: 400, message: "User is not a sister" });
-        }
-
-        const countryCode = sister.countryCode || "+91";
-        const phoneNumber = sister.phoneNumber;
 
         const otp = generateAlphanumericOTP();
 
         // Save in redis with 5 mins expiry (300s)
         await storeValueRedis({
             prefix: "OTP",
-            key: sisterId as string,
+            key: `${countryCode}${phoneNumber}`,
             value: otp,
             ttl: 300
         });
@@ -145,41 +139,38 @@ export const getOtp = async (req: IapiRequest, res: Response, next: NextFunction
     }
 };
 
-export const loginSister = async (req: IapiRequest, res: Response, next: NextFunction) => {
+export const loginByOtp = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
-        const { sisterId, otp } = req.body;
+        const { phoneNumber, otp } = req.body;
+        const countryCode = req.body.countryCode || "+91";
 
-        if (!sisterId || !otp) {
+        if (!phoneNumber || !otp) {
             throw new ApiError({ statusCode: 400, message: "missing required fields" });
         }
 
-        const sister = await User.findById(sisterId);
+        const user = await User.findOne({ phoneNumber, countryCode });
 
-        if (!sister) {
-            throw new ApiError({ statusCode: 404, message: "Sister not found" });
-        }
-
-        if (sister.role !== UserRole.SISTER) {
-             throw new ApiError({ statusCode: 400, message: "User is not a sister" });
+        if (!user) {
+            throw new ApiError({ statusCode: 404, message: "User not found" });
         }
 
         // Validate OTP from redis
-        const storedOtpResult = await getValueRedis({ prefix: "OTP", key: sisterId as string });
+        const storedOtpResult = await getValueRedis({ prefix: "OTP", key: `${countryCode}${phoneNumber}` });
         
         if (!storedOtpResult.value || storedOtpResult.value !== otp) {
             throw new ApiError({ statusCode: 400, message: "Invalid or expired OTP" });
         }
 
         // Set access token
-        setAccessTokenCookie(res, { userId: String(sister._id), role: sister.role });
+        setAccessTokenCookie(res, { userId: String(user._id), role: user.role as UserRole });
 
         // Optional: delete the OTP from redis after successful login to prevent reuse
-        await deleteValueRedis({ prefix: "OTP", key: sisterId as string });
+        await deleteValueRedis({ prefix: "OTP", key: `${countryCode}${phoneNumber}` });
 
         res.status(200).json({
             success: true,
-            message: "Sister logged in successfully",
-            data: sister
+            message: "Logged in successfully",
+            data: user
         });
 
     } catch (error) {
@@ -266,3 +257,67 @@ export const deleteSisterAccount = async (req: IapiRequest, res: Response, next:
     }
 };
 
+export const registerUser = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const { phoneNumber, name, password, role} = req.body;
+        const countryCode = req.body.countryCode || "+91";
+
+        if (!phoneNumber || !name || !role) {
+            throw new ApiError({ statusCode: 400, message: "missing required fields" });
+        }
+
+        if (!Object.values(UserRole).includes(role)) {
+            throw new ApiError({ statusCode: 400, message: "Invalid role" });
+        }
+
+        const user = await registerUserService({
+            phoneNumber,
+            countryCode,
+            name,
+            password,
+            role
+        });
+
+        setAccessTokenCookie(res, { userId: user._id, role: user.role as UserRole });
+
+        res.status(201).json({
+            success: true,
+            message: "User registered successfully",
+            data: user,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const loginUser = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const { phoneNumber, password, role } = req.body;
+        const countryCode = req.body.countryCode || "+91";
+
+        if (!phoneNumber || !role || !password) {
+            throw new ApiError({ statusCode: 400, message: "missing required fields" });
+        }
+
+        if (!Object.values(UserRole).includes(role)) {
+            throw new ApiError({ statusCode: 400, message: "Invalid role" });
+        }
+
+        const user = await loginUserService({
+            phoneNumber,
+            countryCode,
+            password,
+            role
+        });
+
+        setAccessTokenCookie(res, { userId: user._id, role: user.role as UserRole });
+
+        res.status(200).json({
+            success: true,
+            message: "User logged in successfully",
+            data: user,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
