@@ -49,20 +49,40 @@ interface RegisterSisterParams {
   brotherId: string;
 }
 
+
 export const registerSisterService = async ({ phoneNumber, name, brotherId }: RegisterSisterParams) => {
   const existingUser = await User.findOne({ phoneNumber });
   if (existingUser) {
-    throw new ApiError({
-      statusCode: 400,
-      message: "User with this phone number already exists",
-    });
+    if (existingUser.role !== UserRole.SISTER) {
+      throw new ApiError({
+        statusCode: 400,
+        message: "User with this phone number already exists and is not a sister",
+      });
+    }
+
+    const brotherObjectId = new mongoose.Types.ObjectId(brotherId);
+    const hasBrother = existingUser.brothersId?.some(id => String(id) === brotherId);
+
+    if (!hasBrother) {
+      existingUser.brothersId?.push(brotherObjectId);
+      await existingUser.save();
+    }
+
+    return {
+      _id: String(existingUser._id),
+      countryCode: existingUser.countryCode,
+      phoneNumber: existingUser.phoneNumber,
+      name: existingUser.name,
+      role: existingUser.role,
+      brothersId: existingUser.brothersId?.map(id => String(id)) || []
+    };
   }
 
   const newUser = await User.create({
     phoneNumber,
     name,
     role: UserRole.SISTER,
-    brotherId,
+    brothersId: [new mongoose.Types.ObjectId(brotherId)],
   });
 
   return {
@@ -71,7 +91,7 @@ export const registerSisterService = async ({ phoneNumber, name, brotherId }: Re
     phoneNumber: newUser.phoneNumber,
     name: newUser.name,
     role: newUser.role,
-    brotherId: newUser.brotherId ? String(newUser.brotherId) : undefined
+    brothersId: newUser.brothersId?.map(id => String(id)) || []
   };
 };
 
@@ -82,7 +102,7 @@ interface LoginBrotherParams {
 }
 
 export const loginBrotherService = async ({ phoneNumber, countryCode, password }: LoginBrotherParams) => {
-  
+
   const user = await User.findOne({ phoneNumber, countryCode });
   if (!user) {
     throw new ApiError({
@@ -136,28 +156,115 @@ export const getUser = async (id: string, selectAttributes?: string[]) => {
 };
 
 export const getSistersByBrotherId = async (brotherId: string) => {
-  return await User.find({ brotherId, role: UserRole.SISTER }).select('-password').lean();
+  return await User.find({ brothersId: brotherId, role: UserRole.SISTER }).select('-password').lean();
 };
 
+// change
 export const deleteSisterAccountService = async (brotherId: string, sisterId: string) => {
-  const deletedSister = await User.findOneAndDelete({
+  const sister = await User.findOne({
     _id: new mongoose.Types.ObjectId(sisterId),
-    brotherId,
+    brothersId: brotherId,
     role: UserRole.SISTER
   });
 
-  if (!deletedSister) {
+  if (!sister) {
     throw new ApiError({
       statusCode: 404,
       message: "Sister account not found or you are not authorized to delete it.",
     });
   }
 
-  return deletedSister;
+  sister.brothersId = sister.brothersId?.filter(id => String(id) !== brotherId);
+  await sister.save()
+  return sister;
 };
 
 export const getAllbroOfSisService = async (sisterId: string) => {
-  
+  const sister = await User.findById(sisterId).select('brothersId').populate('brothersId', '-password');
+  return sister?.brothersId || [];
 }
 
 
+interface RegisterUserParams {
+  phoneNumber: string;
+  countryCode?: string;
+  name: string;
+  password: string;
+  role: UserRole;
+}
+
+export const registerUserService = async ({ phoneNumber,countryCode, name, password, role }: RegisterUserParams) => {
+  const existingUser = await User.findOne({ phoneNumber, countryCode });
+  if (existingUser) {
+    throw new ApiError({
+      statusCode: 400,
+      message: "User with this phone number already exists. Please login.",
+    });
+  }
+  const hashedPassword =  await hashPassword(password);
+
+  const newUser = await User.create({
+    phoneNumber,
+    countryCode,
+    name,
+    role,
+    password: hashedPassword,
+  });
+
+  return {
+    _id: String(newUser._id),
+    countryCode: newUser.countryCode,
+    phoneNumber: newUser.phoneNumber,
+    name: newUser.name,
+    role: newUser.role,
+    brothersId: newUser.brothersId?.map((id: any) => String(id)) || []
+  };
+};
+
+interface LoginUserParams {
+  phoneNumber: string;
+  countryCode: string;
+  password: string;
+  role: UserRole;
+}
+
+export const loginUserService = async ({ phoneNumber, countryCode, password, role }: LoginUserParams) => {
+  const user = await User.findOne({ phoneNumber, countryCode });
+  if (!user) {
+    throw new ApiError({
+      statusCode: 404,
+      message: "User not found",
+    });
+  }
+
+  if (user.role !== role) {
+    throw new ApiError({
+      statusCode: 403,
+      message: `User is not a ${role.toLowerCase()}`,
+    });
+  }
+
+  if (!user.password) {
+    throw new ApiError({
+      statusCode: 401,
+      message: "Password is not set for this account. Please use OTP login or set a password.",
+    });
+  }
+
+  const isPasswordValid = await comparePassword(password, user.password);
+  if (!isPasswordValid) {
+    throw new ApiError({
+      statusCode: 401,
+      message: "Invalid credentials",
+    });
+  }
+
+  return {
+    _id: String(user._id),
+    countryCode: user.countryCode,
+    phoneNumber: user.phoneNumber,
+    name: user.name,
+    role: user.role,
+    brothersId: user.brothersId?.map((id: any) => String(id)) || []
+  };
+};
