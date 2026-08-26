@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId } from '../services/user.js';
+import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId, deleteSisterAccountService } from '../services/user.js';
 import { UserRole, User } from '../models/users.js';
 import { setAccessTokenCookie } from '../utils/jwt.js';
 import { ApiError } from '../utils/error_handling.js';
@@ -235,3 +235,34 @@ export const getSistersAccounts = async (req: IapiRequest, res: Response, next: 
         next(error);
     }
 };
+
+export const deleteSisterAccount = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const brotherId = req.user?.userId;
+        const sisterId = req.params.sisterId as string;
+
+        if (!brotherId) {
+            throw new ApiError({ statusCode: 401, message: "Unauthorized" });
+        }
+
+        if (req.user?.role !== UserRole.BROTHER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can delete sister accounts" });
+        }
+
+        if (!sisterId) {
+            throw new ApiError({ statusCode: 400, message: "Sister ID is required" });
+        }
+
+        const sis = await deleteSisterAccountService(brotherId, sisterId);
+
+        res.status(200).json({
+            success: true,
+            message: "Sister account deleted successfully",
+            data: sis
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+

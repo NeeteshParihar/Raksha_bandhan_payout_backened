@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // controlers
-import { registerBrother, registerSister, loginBrother, getOtp, loginSister, getProfile, getSistersAccounts} from '../controllers/user.js';
+import { registerBrother, registerSister, loginBrother, getOtp, loginSister, getProfile, getSistersAccounts, deleteSisterAccount} from '../controllers/user.js';
 
 // midleware
 import { validateUser } from '../middlewares/validateUser.js';
@@ -21,6 +21,9 @@ router.get("/profile", validateUser, getProfile);
 
 // Get Sisters Accounts (Brother action)
 router.get("/sisters", validateUser, getSistersAccounts);
+
+// Delete Sister Account (Brother action)
+router.delete("/sister/:sisterId", validateUser, deleteSisterAccount);
 
 // getOtp for sister
 router.get("/get-otp/:sisterId", getOtp );

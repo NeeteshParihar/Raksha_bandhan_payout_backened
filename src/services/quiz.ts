@@ -39,7 +39,15 @@ export const getQuizService = async (quizId: string, userId: string): Promise<IQ
         throw new ApiError({ statusCode: 403, message: "Forbidden: You do not have access to this quiz" });
     }
 
-    if (userId === String(quiz.sisterId)) return quiz;
+    let totalScore = 0;
+    for( let question of quiz.questions) {
+        const score = question.scoreAmount;
+        totalScore += score;
+    }
+
+    if (userId === String(quiz.sisterId)) return {
+        ...quiz,totalScore        
+    };
     // Populate sisterId after verification to save DB overhead if unauthorized
 
     await quiz.populate('sisterId', '-password');
@@ -51,7 +59,9 @@ export const getQuizService = async (quizId: string, userId: string): Promise<IQ
     quizObj.sister = quizObj.sisterId;
     delete quizObj.sisterId;
 
-    return quizObj;
+    return {
+        ...quizObj,totalScore        
+    }
 };
 
 // "_id": "6a896c4031f2815e81699783",

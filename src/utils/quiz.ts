@@ -1,4 +1,4 @@
-import type { QuestionType, QuestionLevel, OptionType } from "../models/question.js";
+import { QuestionType, QuestionLevel, OptionType } from "../models/question.js";
 
 
 export type Option = {
@@ -26,7 +26,7 @@ export const parseQuestionData =  (body: any, files: any): IparsedQuestion => {
     const level = body.level;
     const scoreAmount = body.scoreAmount;
     const answerList = JSON.parse(body.answerList);
-    const optionsList = JSON.parse(body.optionsList);
+    const optionsList = questionType === QuestionType.MCQ ? JSON.parse(body.optionsList): [];
 
     files.forEach( (file: any) => {
         const index = parseInt(file.fieldname.split('-')[2])-1 ;

@@ -74,6 +74,7 @@ export const registerSisterService = async ({ phoneNumber, name, brotherId }: Re
     brotherId: newUser.brotherId ? String(newUser.brotherId) : undefined
   };
 };
+
 interface LoginBrotherParams {
   phoneNumber: string;
   countryCode: string;
@@ -137,4 +138,26 @@ export const getUser = async (id: string, selectAttributes?: string[]) => {
 export const getSistersByBrotherId = async (brotherId: string) => {
   return await User.find({ brotherId, role: UserRole.SISTER }).select('-password').lean();
 };
+
+export const deleteSisterAccountService = async (brotherId: string, sisterId: string) => {
+  const deletedSister = await User.findOneAndDelete({
+    _id: new mongoose.Types.ObjectId(sisterId),
+    brotherId,
+    role: UserRole.SISTER
+  });
+
+  if (!deletedSister) {
+    throw new ApiError({
+      statusCode: 404,
+      message: "Sister account not found or you are not authorized to delete it.",
+    });
+  }
+
+  return deletedSister;
+};
+
+export const getAllbroOfSisService = async (sisterId: string) => {
+  
+}
+
 

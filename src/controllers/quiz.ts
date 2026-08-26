@@ -200,5 +200,3 @@ export const updateQuizStatus = async (req: IapiRequest, res: Response, next: Ne
         next(err);
     }
 }
-
-
