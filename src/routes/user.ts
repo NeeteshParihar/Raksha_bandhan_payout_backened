@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // controlers
-import { registerBrother, registerSister, loginBrother, getOtp, loginSister, getProfile, getSistersAccounts, deleteSisterAccount} from '../controllers/user.js';
+import { registerBrother, registerSister, loginBrother, getOtp, loginByOtp, getProfile, getSistersAccounts, deleteSisterAccount, registerUser, loginUser} from '../controllers/user.js';
 
 // midleware
 import { validateUser } from '../middlewares/validateUser.js';
@@ -25,9 +25,9 @@ router.get("/sisters", validateUser, getSistersAccounts);
 // Delete Sister Account (Brother action)
 router.delete("/sister/:sisterId", validateUser, deleteSisterAccount);
 
-// getOtp for sister
-router.get("/get-otp/:sisterId", getOtp );
-router.post("/login-sister",loginSister );
+// getOtp
+router.post("/get-otp", getOtp );
+router.post("/login-by-otp",loginByOtp );
 
 
 // Generate encrypted invite link (Brother action)
@@ -40,5 +40,8 @@ router.post('/validate-invite', (req, res) => {
   res.send('Validate Invite Link API');
 });
 
-export default router;
+// Unified User Routes
+router.post('/register-user', registerUser);
+router.post('/login-user', loginUser);
 
+export default router;
