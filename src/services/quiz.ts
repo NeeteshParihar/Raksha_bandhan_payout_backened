@@ -98,7 +98,7 @@ export const addQuestionToQuizService = async (quizId: string, brotherId: string
 };
 
 export const deleteQuestionService = async (quizId: string, brotherId: string, questionId: string) => {
-    const quiz = await Quiz.findById(quizId);
+    const quiz = await Quiz.findById(quizId); 
 
     if (!quiz) {
         throw new ApiError({ statusCode: 404, message: "Quiz not found" });
