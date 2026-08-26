@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // controlers
-import { registerBrother, registerSister, loginBrother, getOtp, loginByOtp, getProfile, getSistersAccounts, deleteSisterAccount, registerUser, loginUser} from '../controllers/user.js';
+import { registerBrother, registerSister, loginBrother, getOtp, loginByOtp, getProfile, getSistersAccounts, deleteSisterAccount, registerUser, loginUser, logoutUser} from '../controllers/user.js';
 
 // midleware
 import { validateUser } from '../middlewares/validateUser.js';
@@ -43,5 +43,6 @@ router.post('/validate-invite', (req, res) => {
 // Unified User Routes
 router.post('/register-user', registerUser);
 router.post('/login-user', loginUser);
+router.post('/logout', validateUser, logoutUser);
 
 export default router;

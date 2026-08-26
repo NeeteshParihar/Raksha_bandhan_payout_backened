@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId, deleteSisterAccountService, registerUserService, loginUserService } from '../services/user.js';
 import { UserRole, User } from '../models/users.js';
 import { setAccessTokenCookie } from '../utils/jwt.js';
@@ -316,6 +317,40 @@ export const loginUser = async (req: IapiRequest, res: Response, next: NextFunct
             success: true,
             message: "User logged in successfully",
             data: user,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const logoutUser = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const accessToken = req.cookies?.accessToken;
+        
+        if (accessToken) {
+            // Decode token to find exact expiration time
+            const decoded = jwt.decode(accessToken) as any;
+            if (decoded && decoded.exp) {
+                const currentTime = Math.floor(Date.now() / 1000);
+                const ttl = decoded.exp - currentTime;
+                
+                // Only store if it hasn't already expired
+                if (ttl > 0) {
+                    await storeValueRedis({
+                        prefix: "BLOCKED_TOKEN",
+                        key: accessToken,
+                        value: "true",
+                        ttl: ttl
+                    });
+                }
+            }
+        }
+        
+        res.clearCookie('accessToken');
+
+        res.status(200).json({
+            success: true,
+            message: "User logged out successfully"
         });
     } catch (error) {
         next(error);
