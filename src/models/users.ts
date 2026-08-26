@@ -11,7 +11,7 @@ export interface IUser {
   name: string;
   password?: string;
   role: UserRole;
-  brotherId?: mongoose.Types.ObjectId; 
+  brothersId?: mongoose.Types.ObjectId[]; 
 }
 
 const userSchema = new Schema<IUser>(
@@ -48,12 +48,12 @@ const userSchema = new Schema<IUser>(
       enum: Object.values(UserRole),
       required: true,
     },
-    brotherId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: function ( this: IUser ) {
-        return this.role === UserRole.SISTER;
-      }     
+    brothersId: {
+      type: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      }],
+      default: []
     },
   },
   {
