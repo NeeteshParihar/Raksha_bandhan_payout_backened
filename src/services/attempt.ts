@@ -10,11 +10,11 @@ export const deleteAllAttemptsOfQuizService = async (quizId: string) => {
     }
 };
 // make sure to check the oweners of the quiz before this in the controller
-export const createAttemptService = async (quizId: string, questionId: string, isCorrect: boolean, amountEarned: number) => {
+export const createAttemptService = async (quizId: string, questionId: string, isCorrect: boolean, amountEarned: number, answers: string[]) => {
     const  isExist = await Attempt.exists({ quizId, questionId});
     if(isExist) throw new ApiError({statusCode: 400, message: "Attempt Already exists"});
     const ans = await Attempt.create({
-        quizId, questionId, isCorrect, amountEarned
+        quizId, questionId, isCorrect, amountEarned, answers
     });
     return ans;
 }
@@ -33,8 +33,12 @@ export const getAllAttemptsOfQuiz = async ( quizId: string ) => {
                     $push: {
                         questionId: "$questionId",
                         isCorrect: "$isCorrect",
-                        amountEarned: "$amountEarned"
+                        amountEarned: "$amountEarned",
+                        answers: "$answers"
                     }
+                },
+                totalAmountEarned: {
+                    $sum: "$amountEarned"
                 }
             }
         },
@@ -42,7 +46,8 @@ export const getAllAttemptsOfQuiz = async ( quizId: string ) => {
             $project: {
                 _id: 0,
                 quizId: "$_id",
-                questions: 1
+                questions: 1,
+                totalAmountEarned: 1
             }
         }
     ]);

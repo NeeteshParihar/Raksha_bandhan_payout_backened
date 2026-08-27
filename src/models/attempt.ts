@@ -5,6 +5,7 @@ export interface IAttempt {
   questionId: mongoose.Types.ObjectId;
   isCorrect: boolean;
   amountEarned: number;
+  answers: String[]
 }
 
 const attemptSchema = new Schema<IAttempt>(
@@ -21,6 +22,16 @@ const attemptSchema = new Schema<IAttempt>(
     isCorrect: { 
       type: Boolean, 
       required: true 
+    },
+    answers: {
+      type: [String],
+      validate: {
+        validator: function (v: string[]) {
+          return v && v.length > 0;
+        },
+        message: 'Answers array must contain at least one answer.'
+      },
+      required: true
     },
     amountEarned: {
       type: Number,

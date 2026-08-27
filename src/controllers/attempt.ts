@@ -29,11 +29,11 @@ export const createAttempt = async (req: IapiRequest, res: Response) => {
         const { isCorrect, amountEarned } = await checkUserQuizQuestionAnswer(quizId, questionId, answerList);
 
         // Create the attempt
-        const attempt = await createAttemptService(quizId, questionId, isCorrect, amountEarned);
+        const attempt = await createAttemptService(quizId, questionId, isCorrect, amountEarned, answerList);
 
         return res.status(201).json({
             message: "Attempt created successfully",
-            attempt
+            data: attempt
         });
     } catch (error: any) {
         if (error instanceof ApiError) {
@@ -61,6 +61,7 @@ export const getAllAttemptsOfQuizController = async (req: IapiRequest, res: Resp
         const attempts = await getAllAttemptsOfQuiz(quizId);
 
         return res.status(200).json({
+            success: true,
             message: "Attempts fetched successfully",
             data: attempts
         });
