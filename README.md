@@ -94,7 +94,7 @@ This section provides a summary of all available API routes for the frontend app
 ### 5. Payout APIs (`/payout`)
 - **`GET /pay`** - Endpoint for redirecting HTTP to UPI scheme.
 - **`POST /:quizId`** - Create a payout request (Sister action).
-- **`GET /success/:quizId`** - Get a successful payout by quizId.
+- **`GET /:quizId`** - Get a payout by quizId (supports optional ?status query parameter).
 - **`PATCH /:payoutId/status`** - Update the status of a payout.
 - **`GET /brother/all`** - Get all payouts for a brother.
 

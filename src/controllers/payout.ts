@@ -6,8 +6,9 @@ import { QuizStatus } from '../models/quiz.js';
 import { getQuizService, getQuizOwners } from '../services/quiz.js';
 import { Coupon, CouponStatus } from '../models/coupon.js';
 import { getAllAttemptsOfQuiz } from '../services/attempt.js';
-import { createPayoutService, getSuccessfulPayoutByQuizIdService, updatePayoutStatusService, getPayoutsByBrotherIdService } from '../services/payout.js';
+import { createPayoutService, getQuizPayoutService, updatePayoutStatusService, getPayoutsByBrotherIdService } from '../services/payout.js';
 import { sendSMS } from '../services/sms.js';
+import { PayoutStatus } from '../models/payout.js';
 
 export const createPayout = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
@@ -133,9 +134,10 @@ export const redirectUPI = (req: Request, res: Response) => {
     res.redirect(upiLink);
 };
 
-export const getSuccessfulPayout = async (req: IapiRequest, res: Response, next: NextFunction) => {
+export const getQuizPayout = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
         const quizId = req.params.quizId as string;
+        const status = req.query.status as PayoutStatus;
         const userId = String(req.user?.userId!);
         
         if (!quizId) {
@@ -147,10 +149,10 @@ export const getSuccessfulPayout = async (req: IapiRequest, res: Response, next:
             throw new ApiError({ statusCode: 403, message: "Unauthorized access to this payout" });
         }
 
-        const payout = await getSuccessfulPayoutByQuizIdService(quizId);
+        const payout = await getQuizPayoutService(quizId, status);
         
         if (!payout) {
-            throw new ApiError({ statusCode: 404, message: "No successful payout found for this quiz" });
+            throw new ApiError({ statusCode: 404, message: "No payout found for this quiz" });
         }
 
         res.status(200).json({

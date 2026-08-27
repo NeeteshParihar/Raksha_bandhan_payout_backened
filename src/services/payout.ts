@@ -45,11 +45,13 @@ export const createPayoutService = async (params: ICreatePayoutParams) => {
   return payout;
 };
 
-export const getSuccessfulPayoutByQuizIdService = async (quizId: string) => {
-  const payout = await Payout.findOne({
-    quizId,
-    status: PayoutStatus.SUCCESS
-  });
+export const getQuizPayoutService = async (quizId: string, status: PayoutStatus) => {
+  const query: any = { quizId };
+  if (status) {
+    query.status = status;
+  }
+  
+  const payout = await Payout.findOne(query);
   return payout;
 };
 
