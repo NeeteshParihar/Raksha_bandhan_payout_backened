@@ -98,3 +98,20 @@ export const editCouponService = async ({ brotherId, couponId, amount, expiry }:
 
     return updatedCoupon;
 };
+
+
+export const getCouponByCouponCodeService = async (couponCode: string, userId: string) => {
+    const coupon = await Coupon.findOne({
+        couponCode,
+        $or: [{ brotherId: userId }, { sisterId: userId }]
+    });
+
+    if (!coupon) {
+        throw new ApiError({
+            statusCode: 404,
+            message: "Coupon not found or you do not have permission to view it"
+        });
+    }
+
+    return coupon;
+};

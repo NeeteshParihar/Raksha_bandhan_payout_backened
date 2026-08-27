@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createCoupon, getCoupon, getSisterCoupon, deleteCoupon, editCoupon } from '../controllers/coupon.js';
+import { createCoupon, getCoupon, getSisterCoupon, deleteCoupon, editCoupon, getCouponByCouponCode } from '../controllers/coupon.js';
 import { validateUser } from '../middlewares/validateUser.js';
 
 const router = Router();
@@ -23,6 +23,9 @@ router.patch('/:couponId', validateUser, editCoupon);
 router.post('/apply', (req, res) => {
   res.send('Apply Coupon API');
 });
+
+// Get a coupon by couponCode
+router.get('/code/:couponCode', validateUser, getCouponByCouponCode);
 
 export default router;
 

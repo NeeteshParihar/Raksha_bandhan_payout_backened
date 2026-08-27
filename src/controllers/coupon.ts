@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { IapiRequest } from '../utils/types.js';
 import { ApiError } from '../utils/error_handling.js';
-import { createCouponService, getCouponService, getSisterCouponService, deleteCouponService, editCouponService } from '../services/coupon.js';
+import { createCouponService, getCouponService, getSisterCouponService, deleteCouponService, editCouponService, getCouponByCouponCodeService } from '../services/coupon.js';
 import { UserRole } from '../models/users.js';
 
 export const createCoupon = async (req: IapiRequest, res: Response, next: NextFunction) => {
@@ -147,3 +147,23 @@ export const editCoupon = async (req: IapiRequest, res: Response, next: NextFunc
     }
 };
 
+export const getCouponByCouponCode = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?.userId;
+        const couponCode = req.params.couponCode as string;
+
+        if (!userId || !couponCode) {
+            throw new ApiError({ statusCode: 400, message: "missing required fields" });
+        }
+
+        const coupon = await getCouponByCouponCodeService(couponCode, String(userId));
+
+        res.status(200).json({
+            success: true,
+            message: "Coupon fetched successfully",
+            data: coupon
+        });
+    } catch (error) {
+        next(error);
+    }
+};
