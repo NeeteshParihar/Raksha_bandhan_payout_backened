@@ -3,10 +3,10 @@ import { IapiRequest } from '../utils/types.js';
 import { ApiError } from '../utils/error_handling.js';
 import { UserRole, User } from '../models/users.js';
 import { QuizStatus } from '../models/quiz.js';
-import { getQuizService } from '../services/quiz.js';
+import { getQuizService, getQuizOwners } from '../services/quiz.js';
 import { Coupon, CouponStatus } from '../models/coupon.js';
 import { getAllAttemptsOfQuiz } from '../services/attempt.js';
-import { createPayoutService } from '../services/payout.js';
+import { createPayoutService, getSuccessfulPayoutByQuizIdService, updatePayoutStatusService, getPayoutsByBrotherIdService } from '../services/payout.js';
 import { sendSMS } from '../services/sms.js';
 
 export const createPayout = async (req: IapiRequest, res: Response, next: NextFunction) => {
@@ -67,8 +67,11 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
             throw new ApiError({ statusCode: 400, message: "Total payout amount must be greater than 0" });
         }
 
+        const brotherId = String(quiz.brother?._id || quiz.brotherId);
+
         // 5. Prepare data and create payout
         const payout = await createPayoutService({
+            brotherId,
             sisterId,
             quizId,
             upiId,
@@ -85,7 +88,6 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
         }
 
         // 7. Get brother and sister details for the message
-        const brotherId = quiz.brother?._id;
         const brother = await User.findById(brotherId);
         const sister = await User.findById(sisterId);
 
@@ -131,3 +133,73 @@ export const redirectUPI = (req: Request, res: Response) => {
     res.redirect(upiLink);
 };
 
+export const getSuccessfulPayout = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const quizId = req.params.quizId as string;
+        const userId = String(req.user?.userId!);
+        
+        if (!quizId) {
+            throw new ApiError({ statusCode: 400, message: "Quiz ID is required" });
+        }
+
+        const owners = await getQuizOwners(quizId);
+        if (userId !== owners.brotherId && userId !== owners.sisterId) {
+            throw new ApiError({ statusCode: 403, message: "Unauthorized access to this payout" });
+        }
+
+        const payout = await getSuccessfulPayoutByQuizIdService(quizId);
+        
+        if (!payout) {
+            throw new ApiError({ statusCode: 404, message: "No successful payout found for this quiz" });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: payout
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updatePayoutStatus = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const payoutId = req.params.payoutId as string;
+        const { status } = req.body;
+        const userId = String(req.user?.userId!);
+
+        if (!payoutId || !status) {
+            throw new ApiError({ statusCode: 400, message: "Payout ID and status are required" });
+        }
+
+        const payout = await updatePayoutStatusService(userId, payoutId, status);
+
+        res.status(200).json({
+            success: true,
+            message: "Payout status updated successfully",
+            data: payout
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getPayoutsByBrother = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = String(req.user?.userId!);
+        const role = req.user?.role;
+
+        if (role !== UserRole.BROTHER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can access this resource" });
+        }
+
+        const payouts = await getPayoutsByBrotherIdService(userId);
+
+        res.status(200).json({
+            success: true,
+            data: payouts
+        });
+    } catch (error) {
+        next(error);
+    }
+};

@@ -97,3 +97,4 @@ This section provides a summary of all available API routes for the frontend app
 - **`GET /success/:quizId`** - Get a successful payout by quizId.
 - **`PATCH /:payoutId/status`** - Update the status of a payout.
 - **`GET /brother/all`** - Get all payouts for a brother.
+

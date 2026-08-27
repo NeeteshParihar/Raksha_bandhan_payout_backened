@@ -7,6 +7,7 @@ export enum PayoutStatus {
 }
 
 export interface IPayout {
+  brotherId: mongoose.Types.ObjectId;
   sisterId: mongoose.Types.ObjectId;
   quizId: mongoose.Types.ObjectId;
   upiId: string;
@@ -20,6 +21,11 @@ export interface IPayout {
 // the payout will only store one success payout of a single quiz
 const payoutSchema = new Schema<IPayout>(
   {
+    brotherId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     sisterId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
