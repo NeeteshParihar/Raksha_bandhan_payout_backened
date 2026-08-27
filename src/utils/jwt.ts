@@ -45,11 +45,14 @@ export const validateAccessToken = (token: string): JwtPayload => {
  */
 export const setAccessTokenCookie = (res: Response, jwtPayload: JwtPayload): void => {
     const accessToken = generateAccessToken(jwtPayload);
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie("accessToken", accessToken, {
-        maxAge: 7*24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        secure: isProduction,
+        // 'none' is required for cross-origin cookies (Vercel frontend + Render backend)
+        // 'strict' blocks cookies entirely when origin differs from the server domain
+        sameSite: isProduction ? 'none' : 'strict',
     });
 };
 

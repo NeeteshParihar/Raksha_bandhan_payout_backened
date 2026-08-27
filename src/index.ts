@@ -17,7 +17,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Strip trailing slash to prevent CORS mismatch (e.g. "https://example.com/" vs "https://example.com")
-const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+const url = process.env.NODE_ENV === "production"? process.env.CLIENT_URL: undefined;
+const clientUrl = (url || 'http://localhost:5173').replace(/\/$/, '');
 
 // Middlewares
 app.use(cors({
