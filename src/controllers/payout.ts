@@ -105,7 +105,7 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
         const message = `Hi ${brother.name}, your sister ${sister.name} has completed the quiz "${quiz.title}" and requested a Rakhi payout of Rs. ${totalAmount}.\n\nPlease click on this link to pay: ${clickableLink}`;
         
         await sendSMS({
-            phoneNumber:`${brother.countryCode}${ brother.phoneNumber}`,
+            phoneNumber:`${brother.countryCode}${brother.phoneNumber}`,
             message
         });
 

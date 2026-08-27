@@ -10,14 +10,13 @@ export const sendSMS = async ({
     phoneNumber,
     message
 }: ISMS) => {
+    console.log(`sending messages to ${phoneNumber}`);
     try{
-
-        client.messages.create({
+        await client.messages.create({
             body: message,
             from : process.env.TWILIO_PHONE_NUMBER,
             to: phoneNumber
-        })
-
+        });
     }catch(err: any) {
         throw new ApiError({statusCode: 500, message: err?.message || "SMS service error"})
     }
