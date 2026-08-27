@@ -13,8 +13,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
+    "@types/node": "^26.2.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
@@ -28,15 +33,9 @@
     "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^3.1.14",
     "redis": "^6.2.1",
-    "twilio": "^6.1.0"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.2.0",
     "tsx": "^4.23.12",
+    "twilio": "^6.1.0",
     "typescript": "^7.0.2"
-  }
+  },
+  "devDependencies": {}
 }
