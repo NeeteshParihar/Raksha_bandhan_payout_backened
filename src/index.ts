@@ -16,9 +16,12 @@ import { globalErrorHandler } from './middlewares/errorHandler.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Strip trailing slash to prevent CORS mismatch (e.g. "https://example.com/" vs "https://example.com")
+const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
+
 // Middlewares
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: clientUrl,
     credentials: true,
 }));
 app.use(express.json());
