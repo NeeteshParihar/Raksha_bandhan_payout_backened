@@ -55,22 +55,29 @@ This section provides a summary of all available API routes for the frontend app
 
 ### 1. User & Auth APIs (`/user`)
 - **`POST /register-brother`** - Register a new Brother account.
-- **`POST /login-brother`** - Login for Brother.
 - **`POST /register-sister`** - Register a Sister (Requires Brother auth).
-- **`GET /get-otp/:sisterId`** - Generate OTP for Sister login.
-- **`POST /login-sister`** - Login for Sister using OTP.
-- **`GET /generate-invite/:sisterId`** - Generate encrypted invite link (Brother action).
-- **`POST /validate-invite`** - Validate encrypted invite link (Sister action).
+- **`POST /login-brother`** - Login for Brother.
 - **`GET /profile`** - Get User Profile (Requires Auth).
 - **`GET /sisters`** - Get all Sisters Accounts for the logged-in Brother (Brother action).
+- **`GET /brothers`** - Get all Brothers Accounts for the logged-in Sister (Sister action).
+- **`DELETE /sister/:sisterId`** - Delete Sister Account (Brother action).
+- **`POST /get-otp`** - Generate OTP for Sister login.
+- **`POST /login-by-otp`** - Login for Sister using OTP.
+- **`GET /generate-invite/:sisterId`** - Generate encrypted invite link (Brother action).
+- **`POST /validate-invite`** - Validate encrypted invite link (Sister action).
+- **`POST /register-user`** - Unified user registration.
+- **`POST /login-user`** - Unified user login.
+- **`POST /logout`** - Unified user logout.
+- **`PATCH /update-password`** - Update user password.
 
 ### 2. Quiz APIs (`/quiz`)
 - **`POST /`** - Create a new quiz (Brother action).
-- **`GET /sister/:sisterId`** - Fetch all quizzes for a specific sister (Brother action).
+- **`GET /sister/:userId`** - Fetch all quizzes for a specific sister (Brother action).
 - **`GET /:quizId`** - Fetch a single quiz state including questions (Brother/Sister action).
 - **`POST /:quizId/question`** - Add a question to a quiz (Brother action, supports file upload).
 - **`DELETE /:quizId/question/:questionId`** - Delete a question from a quiz (Brother action).
 - **`PATCH /:quizId`** - Update quiz status (Brother/Sister action).
+- **`DELETE /quiz/:quizId`** - Delete a quiz (Brother action).
 
 ### 3. Attempt APIs (`/attempt`)
 - **`POST /:quizId/:questionId`** - Submit an answer for a specific question (Sister action).
@@ -85,5 +92,8 @@ This section provides a summary of all available API routes for the frontend app
 - **`POST /apply`** - Apply a bonus coupon (Sister action).
 
 ### 5. Payout APIs (`/payout`)
-- **`POST /request-otp`** - Request OTP for payout verification (Sister action).
-- **`POST /verify-and-pay`** - Verify OTP and trigger payout (Sister action).
+- **`GET /pay`** - Endpoint for redirecting HTTP to UPI scheme.
+- **`POST /:quizId`** - Create a payout request (Sister action).
+- **`GET /success/:quizId`** - Get a successful payout by quizId.
+- **`PATCH /:payoutId/status`** - Update the status of a payout.
+- **`GET /brother/all`** - Get all payouts for a brother.
