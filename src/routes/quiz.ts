@@ -12,7 +12,7 @@ const router = Router();
 router.post('/', validateUser, createQuiz);
 
 // Fetch all quizzes for a specific sister (Brother action)
-router.get('/sister/:sisterId', validateUser, getAllQuizesOfSister);
+router.get('/sister/:userId', validateUser, getAllQuizesOfSister);
 
 // Fetch single quiz state including questions (Brother or Sister action)
 router.get('/:quizId', validateUser, getQuiz);

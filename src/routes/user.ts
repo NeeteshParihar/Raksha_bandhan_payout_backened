@@ -1,6 +1,6 @@
 import { Router } from 'express';
 // controlers
-import { registerBrother, registerSister, loginBrother, getOtp, loginByOtp, getProfile, getSistersAccounts, deleteSisterAccount, registerUser, loginUser, logoutUser} from '../controllers/user.js';
+import { registerBrother, registerSister, loginBrother, getOtp, loginByOtp, getProfile, getSistersAccounts, getBrothersAccounts, deleteSisterAccount, registerUser, loginUser, logoutUser, updatePassword} from '../controllers/user.js';
 
 // midleware
 import { validateUser } from '../middlewares/validateUser.js';
@@ -21,6 +21,9 @@ router.get("/profile", validateUser, getProfile);
 
 // Get Sisters Accounts (Brother action)
 router.get("/sisters", validateUser, getSistersAccounts);
+
+// Get Brothers Accounts (Sister action)
+router.get("/brothers", validateUser, getBrothersAccounts);
 
 // Delete Sister Account (Brother action)
 router.delete("/sister/:sisterId", validateUser, deleteSisterAccount);
@@ -44,5 +47,6 @@ router.post('/validate-invite', (req, res) => {
 router.post('/register-user', registerUser);
 router.post('/login-user', loginUser);
 router.post('/logout', validateUser, logoutUser);
+router.patch('/update-password', validateUser, updatePassword);
 
 export default router;

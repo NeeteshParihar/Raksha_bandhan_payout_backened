@@ -19,7 +19,6 @@ export interface IQuiz {
   sisterId: mongoose.Types.ObjectId;
   status: QuizStatus;
   questions: IQuestion[];
-  totalScore?: number
 }
 
 const quizSchema = new Schema<IQuiz>(

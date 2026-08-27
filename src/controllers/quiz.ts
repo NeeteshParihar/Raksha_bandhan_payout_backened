@@ -61,13 +61,19 @@ export const getQuiz = async (req: IapiRequest, res: Response, next: NextFunctio
 
 export const getAllQuizesOfSister = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
-        const brotherId = req.user?.userId;
-        const role = req.user?.role;
-        const { sisterId } = req.params;
+        const userId = req.user?.userId;
+        const role = req.user?.role
+        let brotherId;
+        let sisterId;
 
-        if (role !== UserRole.BROTHER) {
-            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can fetch all quizzes of a sister" });
+        if( role === UserRole.BROTHER) {
+            brotherId = userId;
+            sisterId = req.params.userId;
+        }else {
+            sisterId = userId;
+            brotherId = req.params.userId;
         }
+        
 
         if (!brotherId || !sisterId) {
             throw new ApiError({ statusCode: 400, message: "missing required fields (sisterId)" });

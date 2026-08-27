@@ -26,7 +26,12 @@ export const createQuizService = async ({ title, brotherId, sisterId }: ICreateQ
     return newQuiz;
 };
 
-export const getQuizService = async (quizId: string, userId: string): Promise<IQuiz> => {
+interface IQuizResponse extends Partial<IQuiz> {
+  totalAmount?: number;
+   brother?: any;
+   sister?: any;
+}
+export const getQuizService = async (quizId: string, userId: string): Promise<IQuizResponse> => {
     // First, fetch the quiz without populating
     const quiz = await Quiz.findById(quizId);
 
@@ -39,28 +44,32 @@ export const getQuizService = async (quizId: string, userId: string): Promise<IQ
         throw new ApiError({ statusCode: 403, message: "Forbidden: You do not have access to this quiz" });
     }
 
-    let totalScore = 0;
-    for( let question of quiz.questions) {
+    let totalAmount = 0;
+    for (let question of quiz.questions) {
         const score = question.scoreAmount;
-        totalScore += score;
+        totalAmount += score;
     }
 
-    if (userId === String(quiz.sisterId)) return {
-        ...quiz,totalScore        
-    };
-    // Populate sisterId after verification to save DB overhead if unauthorized
-
-    await quiz.populate('sisterId', '-password');
+    // if sister is fetching the quiz than populate the brother data else if brother is fetching then populate with sister data
+    if (userId === String(quiz.brotherId))
+        await quiz.populate('sisterId', '-password');
+    else
+        await quiz.populate('brotherId', '-password');
 
     // Convert to plain object to manipulate properties
     const quizObj: any = quiz.toObject();
 
-    // Rename sisterId to sister for the frontend
-    quizObj.sister = quizObj.sisterId;
-    delete quizObj.sisterId;
+    // if brother is fetching
+    if (userId === String(quiz.brotherId)) {
+        quizObj.sister = quizObj.sisterId;
+        delete quizObj.sisterId
+    } else {
+        quizObj.brother = quizObj.brotherId;
+        delete quizObj.brotherId;
+    }
 
     return {
-        ...quizObj,totalScore        
+        ...quizObj, totalAmount
     }
 };
 
@@ -72,11 +81,87 @@ interface IAllQuizes {
     sisterId: Types.ObjectId;
     status: QuizStatus;
     __v: number;
+    totalAmount?: number;
+    payoutStats?: {
+        pending: number;
+        success: number;
+        failed: number;
+    };
 }
 
 export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string): Promise<IAllQuizes[]> => {
-    // Exclude the nested questions array to keep the payload small
-    const quizzes = await Quiz.find({ brotherId, sisterId }).select('title brotherId  sisterId status').lean();
+    const quizzes = await Quiz.aggregate([
+        {
+            $match: {
+                brotherId: new Types.ObjectId(brotherId),
+                sisterId: new Types.ObjectId(sisterId)
+            }
+        },
+        {
+            $unwind: {
+                path: "$questions",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $group: {
+                _id: "$_id",
+                title: { $first: "$title" },
+                brotherId: { $first: "$brotherId" },
+                sisterId: { $first: "$sisterId" },
+                status: { $first: "$status" },
+                totalAmount: {
+                    $sum: { $ifNull: ["$questions.scoreAmount", 0] }
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: "payouts",
+                localField: "_id",
+                foreignField: "quizId",
+                as: "payouts"
+            }
+        },
+        {
+            $addFields: {
+                payoutStats: {
+                    pending: {
+                        $size: {
+                            $filter: {
+                                input: "$payouts",
+                                as: "p",
+                                cond: { $eq: ["$$p.status", "PENDING"] }
+                            }
+                        }
+                    },
+                    success: {
+                        $size: {
+                            $filter: {
+                                input: "$payouts",
+                                as: "p",
+                                cond: { $eq: ["$$p.status", "SUCCESS"] }
+                            }
+                        }
+                    },
+                    failed: {
+                        $size: {
+                            $filter: {
+                                input: "$payouts",
+                                as: "p",
+                                cond: { $eq: ["$$p.status", "FAILED"] }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                payouts: 0
+            }
+        }
+    ]);
     return quizzes;
 };
 
@@ -98,7 +183,7 @@ export const addQuestionToQuizService = async (quizId: string, brotherId: string
 };
 
 export const deleteQuestionService = async (quizId: string, brotherId: string, questionId: string) => {
-    const quiz = await Quiz.findById(quizId); 
+    const quiz = await Quiz.findById(quizId);
 
     if (!quiz) {
         throw new ApiError({ statusCode: 404, message: "Quiz not found" });
@@ -147,10 +232,10 @@ export const checkUserQuizQuestionAnswer = async (quizId: string, questionId: st
     const quiz = await Quiz.findById(quizId);
     if (!quiz)
         throw new ApiError({ statusCode: 404, message: "quiz not found!" });
-    
+
     const question = quiz.questions?.find((ques) => String(ques._id) === questionId);
     if (!question)
-        throw new ApiError({ statusCode: 404, message: "question is not found inside the quiz!" });    
+        throw new ApiError({ statusCode: 404, message: "question is not found inside the quiz!" });
     if (question.questionType === QuestionType.TEXT && answerList.length != 1)
         throw new ApiError({ statusCode: 400, message: "Only one answer is allowed in case of TEXT typed questions" })
 
@@ -186,9 +271,9 @@ interface IQuizOwers {
     sisterId: string
 }
 
-export const getQuizOwners = async( quizId: string ): Promise<IQuizOwers> => {
+export const getQuizOwners = async (quizId: string): Promise<IQuizOwers> => {
     const quiz = await Quiz.findById(quizId).select("brotherId sisterId");
-    if(!quiz) throw new ApiError({statusCode: 404, message: "quiz not found!"});
+    if (!quiz) throw new ApiError({ statusCode: 404, message: "quiz not found!" });
     return {
         _id: String(quiz._id),
         brotherId: String(quiz.brotherId),

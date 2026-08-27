@@ -184,7 +184,6 @@ export const getAllbroOfSisService = async (sisterId: string) => {
   return sister?.brothersId || [];
 }
 
-
 interface RegisterUserParams {
   phoneNumber: string;
   countryCode?: string;
@@ -267,4 +266,20 @@ export const loginUserService = async ({ phoneNumber, countryCode, password, rol
     role: user.role,
     brothersId: user.brothersId?.map((id: any) => String(id)) || []
   };
+};
+
+export const updatePasswordService = async (userId: string, password: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError({
+      statusCode: 404,
+      message: "User not found",
+    });
+  }
+
+  const hashedPassword = await hashPassword(password);
+  user.password = hashedPassword;
+  await user.save();
+
+  return true;
 };

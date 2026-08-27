@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId, deleteSisterAccountService, registerUserService, loginUserService } from '../services/user.js';
+import { registerBrotherService, registerSisterService, loginBrotherService, getUser, getSistersByBrotherId, deleteSisterAccountService, registerUserService, loginUserService, getAllbroOfSisService, updatePasswordService } from '../services/user.js';
 import { UserRole, User } from '../models/users.js';
 import { setAccessTokenCookie } from '../utils/jwt.js';
 import { ApiError } from '../utils/error_handling.js';
@@ -127,12 +127,14 @@ export const getOtp = async (req: IapiRequest, res: Response, next: NextFunction
 
         await sendSMS({
             phoneNumber: `${countryCode}${phoneNumber}`,
-            message: message
+            message: message,
+           
         });
 
         res.status(200).json({
             success: true,
-            message: "OTP sent successfully"
+            message: "OTP sent successfully",
+            minutes: 5
         });
 
     } catch (error) {
@@ -221,6 +223,30 @@ export const getSistersAccounts = async (req: IapiRequest, res: Response, next: 
             success: true,
             message: "Sisters accounts fetched successfully",
             data: sisters
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getBrothersAccounts = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const sisterId = req.user?.userId;
+        if (!sisterId) {
+            throw new ApiError({ statusCode: 401, message: "Unauthorized" });
+        }
+        
+        if (req.user?.role !== UserRole.SISTER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only sisters can fetch their brothers' accounts" });
+        }
+
+        const brothers = await getAllbroOfSisService(sisterId);
+
+        res.status(200).json({
+            success: true,
+            message: "Brothers accounts fetched successfully",
+            data: brothers
         });
 
     } catch (error) {
@@ -351,6 +377,30 @@ export const logoutUser = async (req: IapiRequest, res: Response, next: NextFunc
         res.status(200).json({
             success: true,
             message: "User logged out successfully"
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updatePassword = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?.userId;
+        const { password } = req.body;
+
+        if (!userId) {
+            throw new ApiError({ statusCode: 401, message: "Unauthorized" });
+        }
+
+        if (!password) {
+            throw new ApiError({ statusCode: 400, message: "Password is required" });
+        }
+
+        await updatePasswordService(userId, password);
+
+        res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
         });
     } catch (error) {
         next(error);

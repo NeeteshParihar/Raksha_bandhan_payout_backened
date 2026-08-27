@@ -12,10 +12,12 @@ export interface IPayout {
   upiId: string;
   totalAmount: number;
   couponAmount: number;
+  counponCode: string;
   quizAmount: number;
   status: PayoutStatus;
 }
 
+// the payout will only store one success payout of a single quiz
 const payoutSchema = new Schema<IPayout>(
   {
     sisterId: {
@@ -39,6 +41,10 @@ const payoutSchema = new Schema<IPayout>(
     couponAmount: {
       type: Number,
       default: 0,
+    },
+    counponCode: {
+      type: String,
+      required: true
     },
     quizAmount: {
       type: Number,
