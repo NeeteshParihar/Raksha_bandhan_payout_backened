@@ -12,7 +12,7 @@ export interface IPayout {
   upiId: string;
   totalAmount: number;
   couponAmount: number;
-  counponCode: string;
+  counponCode?: string;
   quizAmount: number;
   status: PayoutStatus;
 }
@@ -43,8 +43,7 @@ const payoutSchema = new Schema<IPayout>(
       default: 0,
     },
     counponCode: {
-      type: String,
-      required: true
+      type: String,     
     },
     quizAmount: {
       type: Number,

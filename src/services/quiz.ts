@@ -23,7 +23,7 @@ export const createQuizService = async ({ title, brotherId, sisterId }: ICreateQ
         sisterId,
     });
 
-    return newQuiz;
+    return newQuiz.toObject();
 };
 
 interface IQuizResponse extends Partial<IQuiz> {
@@ -280,3 +280,12 @@ export const getQuizOwners = async (quizId: string): Promise<IQuizOwers> => {
         sisterId: String(quiz.sisterId)
     };
 }
+
+export const deleteQuizService = async (quizId: string, brotherId: string) => {
+    const quiz = await Quiz.findOneAndDelete({ _id: quizId, brotherId });
+    if (!quiz) {
+        throw new ApiError({ statusCode: 404, message: "Quiz not found or you are not authorized to delete it" });
+    }
+    return quiz;
+};
+

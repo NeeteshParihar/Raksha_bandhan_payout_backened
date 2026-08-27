@@ -1,15 +1,13 @@
 import { Router } from 'express';
+import { createPayout, redirectUPI } from '../controllers/payout.js';
+import { validateUser } from '../middlewares/validateUser.js';
 
 const router = Router();
 
-// Request OTP for payout verification (Sister action)
-router.post('/request-otp', (req, res) => {
-  res.send('Request OTP API');
-});
+// Endpoint for redirecting HTTP to UPI scheme
+router.get('/pay', redirectUPI);
 
-// Verify OTP and trigger mocked payout (Sister action)
-router.post('/verify-and-pay', (req, res) => {
-  res.send('Verify OTP & Pay API');
-});
+// Create a payout request (Sister action)
+router.post('/:quizId', validateUser, createPayout);
 
 export default router;

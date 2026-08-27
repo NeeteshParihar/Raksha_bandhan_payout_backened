@@ -283,3 +283,4 @@ export const updatePasswordService = async (userId: string, password: string) =>
 
   return true;
 };
+

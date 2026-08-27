@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createQuiz, getQuiz, getAllQuizesOfSister, addQuestionToQuiz, deleteQuestion, updateQuizStatus } from '../controllers/quiz.js';
+import { createQuiz, getQuiz, getAllQuizesOfSister, addQuestionToQuiz, deleteQuestion, updateQuizStatus, deleteQuiz } from '../controllers/quiz.js';
 import { validateUser } from '../middlewares/validateUser.js';
 import { validateUserRole } from '../middlewares/validateUserRole.js';
 import { UserRole } from '../models/users.js';
@@ -24,6 +24,9 @@ router.post("/:quizId/question", validateUser, validateUserRole(UserRole.BROTHER
 router.delete("/:quizId/question/:questionId", validateUser, validateUserRole(UserRole.BROTHER), deleteQuestion );
 
 router.patch("/:quizId", validateUser, updateQuizStatus );
+
+// Delete a quiz
+router.delete("/quiz/:quizId", validateUser, validateUserRole(UserRole.BROTHER), deleteQuiz);
 
 export default router;
 
