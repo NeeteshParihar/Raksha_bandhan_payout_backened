@@ -102,7 +102,9 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
         const clickableLink = encodeURI(`${baseUrl}/api/payouts/pay?pa=${upiId}&pn=${sister.name}&am=${totalAmount}`);
 
         // 9. Send message to brother
-        const message = `Hi ${brother.name}, your sister ${sister.name} has completed the quiz "${quiz.title}" and requested a Rakhi payout of Rs. ${totalAmount}.\n\nPlease click on this link to pay: ${clickableLink}`;
+        const clientUrl = (process.env.CLIENT_URL || '').replace(/\/$/, '');
+        const confirmLink = `${clientUrl}/payout/${payout._id}/confirm`;
+        const message = `Hi ${brother.name}, your sister ${sister.name} has completed the quiz "${quiz.title}" and requested a Rakhi payout of Rs. ${totalAmount}.\n\nPlease click on this link to pay: ${clickableLink}\n\nOnce you've paid, please tap the link below to confirm the payment ✅\n${confirmLink}`;
         
         await sendSMS({
             phoneNumber:`${brother.countryCode}${brother.phoneNumber}`,
