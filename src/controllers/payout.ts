@@ -115,7 +115,7 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
             success: true,
             message: "Payout created and request sent to brother successfully",
             data: {
-                payout,
+                ...payout.toObject(),
                 brother,
                 sister
             }
