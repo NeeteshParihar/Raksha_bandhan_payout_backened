@@ -78,9 +78,12 @@ export const registerSisterService = async ({ phoneNumber, name, brotherId }: Re
     };
   }
 
+  const hashedPassword = await hashPassword(phoneNumber);
+
   const newUser = await User.create({
     phoneNumber,
     name,
+    password: hashedPassword,
     role: UserRole.SISTER,
     brothersId: [new mongoose.Types.ObjectId(brotherId)],
   });

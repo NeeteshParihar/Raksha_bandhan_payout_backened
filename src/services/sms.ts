@@ -10,7 +10,6 @@ export const sendSMS = async ({
     phoneNumber,
     message
 }: ISMS) => {
-    console.log(`sending messages to ${phoneNumber}`);
     try{
         await client.messages.create({
             body: message,
@@ -19,5 +18,6 @@ export const sendSMS = async ({
         });
     }catch(err: any) {
         throw new ApiError({statusCode: 500, message: err?.message || "SMS service error"})
+        console.error("error inside the sms service", err?.message )
     }
 }

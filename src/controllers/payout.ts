@@ -174,6 +174,12 @@ export const updatePayoutStatus = async (req: IapiRequest, res: Response, next: 
             throw new ApiError({ statusCode: 400, message: "Payout ID and status are required" });
         }
 
+        if( status !== PayoutStatus.SUCCESS) {
+            throw new ApiError({
+                statusCode: 400, message: "This action is not supported, you can only mark a payout as paid or success"
+            })
+        }
+
         const payout = await updatePayoutStatusService(userId, payoutId, status);
 
         res.status(200).json({
