@@ -6,7 +6,7 @@ import { QuizStatus } from '../models/quiz.js';
 import { getQuizService, getQuizOwners } from '../services/quiz.js';
 import { Coupon, CouponStatus } from '../models/coupon.js';
 import { getAllAttemptsOfQuiz } from '../services/attempt.js';
-import { createPayoutService, getQuizPayoutService, updatePayoutStatusService, getPayoutsByBrotherIdService } from '../services/payout.js';
+import { createPayoutService, getQuizPayoutService, updatePayoutStatusService, getPayoutsByBrotherIdService, getPayoutByIdService } from '../services/payout.js';
 import { sendSMS } from '../services/sms.js';
 import { PayoutStatus } from '../models/payout.js';
 
@@ -212,6 +212,30 @@ export const getPayoutsByBrother = async (req: IapiRequest, res: Response, next:
         res.status(200).json({
             success: true,
             data: payouts
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getPayoutById = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const payoutId = req.params.payoutId as string;
+        const userId = String(req.user?.userId!);
+        
+        if (!payoutId) {
+            throw new ApiError({ statusCode: 400, message: "Payout ID is required" });
+        }
+
+        const payout = await getPayoutByIdService(payoutId, userId);
+        
+        if (!payout) {
+            throw new ApiError({ statusCode: 404, message: "Payout not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: payout
         });
     } catch (error) {
         next(error);

@@ -105,3 +105,25 @@ export const getPayoutsByBrotherIdService = async (brotherId: string) => {
   });
 };
 
+export const getPayoutByIdService = async (payoutId: string, userId: string) => {
+  const payout = await Payout.findById(payoutId)
+    .populate({ path: "sisterId", select: "-password" })
+    .populate({ path: "brotherId", select: "-password" })
+    .populate({ path: "quizId", select: "-questions" })
+    .lean();
+
+  if (!payout) return null;
+
+  if (String(payout.brotherId._id) !== userId && String(payout.sisterId._id) !== userId) {
+    throw new ApiError({ statusCode: 403, message: "Unauthorized access to this payout" });
+  }
+
+  return {
+    ...payout,
+    sisterId: payout.sisterId._id,
+    brotherId: payout.brotherId._id,
+    sister: payout.sisterId,
+    brother: payout.brotherId,
+    quiz: payout.quizId,
+  };
+};

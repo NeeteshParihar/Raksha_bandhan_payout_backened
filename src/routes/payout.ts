@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPayout, redirectUPI, getQuizPayout, updatePayoutStatus, getPayoutsByBrother } from '../controllers/payout.js';
+import { createPayout, redirectUPI, getQuizPayout, updatePayoutStatus, getPayoutsByBrother, getPayoutById } from '../controllers/payout.js';
 import { validateUser } from '../middlewares/validateUser.js';
 
 const router = Router();
@@ -18,5 +18,9 @@ router.patch('/:payoutId/status', validateUser, updatePayoutStatus);
 
 // Get all payouts for a brother
 router.get('/brother/all', validateUser, getPayoutsByBrother);
+
+// Get a payout by its ID
+router.get('/payout/:payoutId', validateUser, getPayoutById);
+
 
 export default router;
