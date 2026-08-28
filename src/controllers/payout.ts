@@ -114,7 +114,11 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
         res.status(201).json({
             success: true,
             message: "Payout created and request sent to brother successfully",
-            data: payout
+            data: {
+                payout,
+                brother,
+                sister
+            }
         });
 
     } catch (error) {
