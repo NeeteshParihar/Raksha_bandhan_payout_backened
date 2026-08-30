@@ -11,7 +11,7 @@ router.get('/pay', redirectUPI);
 router.post('/:quizId', validateUser, createPayout);
 
 // Get a payout by quizId
-router.get('/:quizId', validateUser, getQuizPayout);
+router.get('/:quizId', validateUser, getQuizPayout); 
 
 // Update the status of a payout
 router.patch('/:payoutId/status', validateUser, updatePayoutStatus);

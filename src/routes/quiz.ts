@@ -13,6 +13,7 @@ router.post('/', validateUser, createQuiz);
 
 // Fetch all quizzes for a specific sister (Brother action)
 // edit
+// api/quizes/sister/:userId?quizStates=READY-DRAFT&status=pending-in_progress-completed
 router.get('/sister/:userId', validateUser, getAllQuizesOfSister);
 
 // Fetch single quiz state including questions (Brother or Sister action)

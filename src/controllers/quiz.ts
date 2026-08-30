@@ -88,7 +88,22 @@ export const getAllQuizesOfSister = async (req: IapiRequest, res: Response, next
             throw new ApiError({ statusCode: 400, message: "missing required fields (sisterId)" });
         }
 
-        const quizzes = await getAllQuizesOfSisterService(String(brotherId), sisterId as string, role);
+        const quizStatesQuery = req.query.quizStates as string;
+        const statusQuery = req.query.statuses as string;
+
+        const states = quizStatesQuery 
+            ? quizStatesQuery.split('-').map(s => s.toUpperCase()) 
+            : [QuizState.READY];
+        
+        const statuses = statusQuery
+            ? statusQuery.split('-').map(s => s.toUpperCase())
+            : [QuizStatus.PENDING, QuizStatus.IN_PROGRESS, QuizStatus.COMPLETED];
+
+        if (role === UserRole.SISTER && states.includes(QuizState.DRAFT)) {
+            throw new ApiError({ statusCode: 400, message: "Sisters are not allowed to fetch draft quizzes" });
+        }
+
+        const quizzes = await getAllQuizesOfSisterService(String(brotherId), sisterId as string, role, states, statuses);
 
         res.status(200).json({
             success: true,

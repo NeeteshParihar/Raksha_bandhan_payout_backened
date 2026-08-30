@@ -95,14 +95,21 @@ interface IAllQuizes {
     };
 }
 
-export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string, role?: string): Promise<IAllQuizes[]> => {
+export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string, role?: string, states?: string[], statuses?: string[]): Promise<IAllQuizes[]> => {
     const matchStage: any = {
         brotherId: new Types.ObjectId(brotherId),
         sisterId: new Types.ObjectId(sisterId)
     };
 
+    if (states && states.length > 0) {
+        matchStage.quizState = { $in: states };
+    }
+
+    if (statuses && statuses.length > 0) {
+        matchStage.status = { $in: statuses };
+    }
+
     if (role === 'SISTER') {
-        matchStage.quizState = { $ne: QuizState.DRAFT };
         matchStage['questions.0'] = { $exists: true };
     }
 
@@ -123,6 +130,7 @@ export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: s
                 brotherId: { $first: "$brotherId" },
                 sisterId: { $first: "$sisterId" },
                 status: { $first: "$status" },
+                quizState: { $first: "$quizState" },
                 totalAmount: {
                     $sum: { $ifNull: ["$questions.scoreAmount", 0] }
                 }
