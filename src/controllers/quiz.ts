@@ -33,11 +33,7 @@ export const createQuiz = async (req: IapiRequest, res: Response, next: NextFunc
             message: "Quiz created successfully",
             data: {
                 totalAmount: 0,
-                payoutStats: {
-                    pending: 0,
-                    success: 0,
-                    failed: 0
-                },
+                payoutStatus: null,
                 ...newQuiz
             }
         });

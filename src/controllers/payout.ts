@@ -12,7 +12,7 @@ import { PayoutStatus } from '../models/payout.js';
 
 export const createPayout = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
-        // coupon is optional here
+        // coupon is optional here 
         const { upiId, couponCode } = req.body;
         const { quizId } = req.params as any;
         const sisterId = req.user?.userId;
@@ -64,7 +64,7 @@ export const createPayout = async (req: IapiRequest, res: Response, next: NextFu
         const quizAmount = attempts.totalAmountEarned || 0;
         const totalAmount = quizAmount + couponAmount;
 
-        if (totalAmount <= 0) {
+        if (totalAmount < 0) {
             throw new ApiError({ statusCode: 400, message: "Total payout amount must be greater than 0" });
         }
 

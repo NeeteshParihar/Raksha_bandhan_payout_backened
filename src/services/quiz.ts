@@ -88,11 +88,7 @@ interface IAllQuizes {
     status: QuizStatus;
     __v: number;
     totalAmount?: number;
-    payoutStats?: {
-        pending: number;
-        success: number;
-        failed: number;
-    };
+    payoutStatus?: string;
 }
 
 export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string, role?: string, states?: string[], statuses?: string[]): Promise<IAllQuizes[]> => {
@@ -146,39 +142,11 @@ export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: s
         },
         {
             $addFields: {
-                payoutStats: {
-                    pending: {
-                        $size: {
-                            $filter: {
-                                input: "$payouts",
-                                as: "p",
-                                cond: { $eq: ["$$p.status", "PENDING"] }
-                            }
-                        }
-                    },
-                    success: {
-                        $size: {
-                            $filter: {
-                                input: "$payouts",
-                                as: "p",
-                                cond: { $eq: ["$$p.status", "SUCCESS"] }
-                            }
-                        }
-                    },
-                    failed: {
-                        $size: {
-                            $filter: {
-                                input: "$payouts",
-                                as: "p",
-                                cond: { $eq: ["$$p.status", "FAILED"] }
-                            }
-                        }
-                    }
-                }
+                payoutStatus: { $arrayElemAt: ["$payouts.status", 0] }
             }
         },
         {
-            $project: {
+            $project: { 
                 payouts: 0
             }
         }

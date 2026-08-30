@@ -3,7 +3,6 @@ import mongoose, { Document, Schema } from 'mongoose';
 export enum PayoutStatus {
   PENDING = 'PENDING',
   SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
 }
 
 export interface IPayout {
@@ -35,6 +34,7 @@ const payoutSchema = new Schema<IPayout>(
       type: Schema.Types.ObjectId,
       ref: 'Quiz', // We'll create the Quiz model soon
       required: true,
+      unique: true,
     },
     upiId: {
       type: String,
