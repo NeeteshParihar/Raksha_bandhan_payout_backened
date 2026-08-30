@@ -11,7 +11,8 @@ import couponRoutes from './routes/coupon.js';
 import payoutRoutes from './routes/payout.js';
 import { connectDB } from './config/mongodb.js';
 import { connectRedis } from './config/redis.js';
-import { globalErrorHandler } from './middlewares/errorHandler.js';
+import { globalErrorHandler } from './middlewares/errorHandler.js';  
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
