@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createQuiz, getQuiz, getAllQuizesOfSister, addQuestionToQuiz, deleteQuestion, updateQuizStatus, deleteQuiz } from '../controllers/quiz.js';
+import { createQuiz, getQuiz, getAllQuizesOfSister, addQuestionToQuiz, deleteQuestion, updateQuizStatus, deleteQuiz, updateQuizState } from '../controllers/quiz.js';
 import { validateUser } from '../middlewares/validateUser.js';
 import { validateUserRole } from '../middlewares/validateUserRole.js';
 import { UserRole } from '../models/users.js';
@@ -12,9 +12,11 @@ const router = Router();
 router.post('/', validateUser, createQuiz);
 
 // Fetch all quizzes for a specific sister (Brother action)
+// edit
 router.get('/sister/:userId', validateUser, getAllQuizesOfSister);
 
 // Fetch single quiz state including questions (Brother or Sister action)
+
 router.get('/:quizId', validateUser, getQuiz);
 
 // add question in the quiz
@@ -23,10 +25,14 @@ router.post("/:quizId/question", validateUser, validateUserRole(UserRole.BROTHER
 // delete question from the quiz
 router.delete("/:quizId/question/:questionId", validateUser, validateUserRole(UserRole.BROTHER), deleteQuestion );
 
+// edit
 router.patch("/:quizId", validateUser, updateQuizStatus );
 
 // Delete a quiz
 router.delete("/quiz/:quizId", validateUser, validateUserRole(UserRole.BROTHER), deleteQuiz);
+
+// Update quiz state (e.g. to READY)
+router.patch("/:quizId/state", validateUser, validateUserRole(UserRole.BROTHER), updateQuizState);
 
 export default router;
 

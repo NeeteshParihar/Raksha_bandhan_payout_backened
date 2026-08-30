@@ -13,11 +13,17 @@ export enum QuizActions {
   RESET = "RESET"
 }
 
+export enum QuizState {
+  DRAFT = 'DRAFT',
+  READY = 'READY'
+}
+
 export interface IQuiz {
   title: string;
   brotherId: mongoose.Types.ObjectId;
   sisterId: mongoose.Types.ObjectId;
   status: QuizStatus;
+  quizState: QuizState;
   questions: IQuestion[];
 }
 
@@ -30,6 +36,7 @@ const quizSchema = new Schema<IQuiz>(
     brotherId: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // brother will create the quiz
     sisterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // which sister can attend the quiz
     status: { type: String, enum: Object.values(QuizStatus), default: QuizStatus.PENDING },
+    quizState: { type: String, enum: Object.values(QuizState), default: QuizState.DRAFT },
     questions: {
       type: [questionSchema], // Questions are nested directly in the Quiz
       default: []  

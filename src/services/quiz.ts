@@ -1,4 +1,4 @@
-import { Quiz, IQuiz, QuizStatus } from '../models/quiz.js';
+import { Quiz, IQuiz, QuizStatus, QuizState } from '../models/quiz.js';
 import { ApiError } from '../utils/error_handling.js';
 import { checkIsSister } from './user.js';
 import { IparsedQuestion } from '../utils/quiz.js';
@@ -31,7 +31,7 @@ interface IQuizResponse extends Partial<IQuiz> {
    brother?: any;
    sister?: any;
 }
-export const getQuizService = async (quizId: string, userId: string): Promise<IQuizResponse> => {
+export const getQuizService = async (quizId: string, userId: string, role?: string): Promise<IQuizResponse> => {
     // First, fetch the quiz without populating
     const quiz = await Quiz.findById(quizId);
 
@@ -42,6 +42,12 @@ export const getQuizService = async (quizId: string, userId: string): Promise<IQ
     // Verify permissions using the raw IDs
     if (String(quiz.brotherId) !== userId && String(quiz.sisterId) !== userId) {
         throw new ApiError({ statusCode: 403, message: "Forbidden: You do not have access to this quiz" });
+    }
+
+    if (role === 'SISTER') {
+        if (quiz.quizState === QuizState.DRAFT || !quiz.questions || quiz.questions.length === 0) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Quiz is in draft state or has no questions" });
+        }
     }
 
     let totalAmount = 0;
@@ -89,13 +95,20 @@ interface IAllQuizes {
     };
 }
 
-export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string): Promise<IAllQuizes[]> => {
+export const getAllQuizesOfSisterService = async (brotherId: string, sisterId: string, role?: string): Promise<IAllQuizes[]> => {
+    const matchStage: any = {
+        brotherId: new Types.ObjectId(brotherId),
+        sisterId: new Types.ObjectId(sisterId)
+    };
+
+    if (role === 'SISTER') {
+        matchStage.quizState = { $ne: QuizState.DRAFT };
+        matchStage['questions.0'] = { $exists: true };
+    }
+
     const quizzes = await Quiz.aggregate([
         {
-            $match: {
-                brotherId: new Types.ObjectId(brotherId),
-                sisterId: new Types.ObjectId(sisterId)
-            }
+            $match: matchStage
         },
         {
             $unwind: {
@@ -226,6 +239,27 @@ export const UpdateQuizStatusService = async (quizId: string, userId: string, st
     await quiz.save();
     return quiz;
 }
+
+export const UpdateQuizStateService = async (quizId: string, brotherId: string, state: QuizState) => {
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+        throw new ApiError({ statusCode: 404, message: "Quiz not found" });
+    }
+
+    if (String(quiz.brotherId) !== brotherId) {
+        throw new ApiError({ statusCode: 403, message: "Forbidden: You do not have permission to modify this quiz" });
+    }
+
+    if (state === QuizState.READY) {
+        if (!quiz.questions || quiz.questions.length === 0) {
+            throw new ApiError({ statusCode: 400, message: "Cannot mark quiz as READY: Quiz must have at least one question" });
+        }
+    }
+
+    quiz.quizState = state;
+    await quiz.save();
+    return quiz;
+};
 
 
 export const checkUserQuizQuestionAnswer = async (quizId: string, questionId: string, answerList: string[]) => {

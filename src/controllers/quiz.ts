@@ -1,11 +1,11 @@
 import { Response, NextFunction } from 'express';
 import { IapiRequest } from '../utils/types.js';
 import { ApiError } from '../utils/error_handling.js';
-import { createQuizService, getQuizService, getAllQuizesOfSisterService, addQuestionToQuizService, deleteQuestionService, UpdateQuizStatusService, deleteQuizService } from '../services/quiz.js';
+import { createQuizService, getQuizService, getAllQuizesOfSisterService, addQuestionToQuizService, deleteQuestionService, UpdateQuizStatusService, deleteQuizService, UpdateQuizStateService } from '../services/quiz.js';
 import { parseQuestionData } from '../utils/quiz.js';
 import { UserRole } from '../models/users.js';
 import { deleteCloudinaryFiles } from '../services/cloudinary.js';
-import { QuizActions, QuizStatus } from '../models/quiz.js';
+import { QuizActions, QuizStatus, QuizState } from '../models/quiz.js';
 import { deleteAllAttemptsOfQuizService } from '../services/attempt.js';
 
 export const createQuiz = async (req: IapiRequest, res: Response, next: NextFunction) => {
@@ -49,13 +49,14 @@ export const createQuiz = async (req: IapiRequest, res: Response, next: NextFunc
 export const getQuiz = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
         const userId = req.user?.userId;
+        const role = req.user?.role;
         const { quizId } = req.params;
 
         if (!userId || !quizId) {
             throw new ApiError({ statusCode: 400, message: "missing required fields (quizId)" });
         }
 
-        const quiz = await getQuizService(quizId as string, String(userId));
+        const quiz = await getQuizService(quizId as string, String(userId), role);
 
         res.status(200).json({
             success: true,
@@ -87,7 +88,7 @@ export const getAllQuizesOfSister = async (req: IapiRequest, res: Response, next
             throw new ApiError({ statusCode: 400, message: "missing required fields (sisterId)" });
         }
 
-        const quizzes = await getAllQuizesOfSisterService(String(brotherId), sisterId as string);
+        const quizzes = await getAllQuizesOfSisterService(String(brotherId), sisterId as string, role);
 
         res.status(200).json({
             success: true,
@@ -256,6 +257,37 @@ export const deleteQuiz = async (req: IapiRequest, res: Response, next: NextFunc
         res.status(200).json({
             success: true,
             message: "Quiz deleted successfully"
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateQuizState = async (req: IapiRequest, res: Response, next: NextFunction) => {
+    try {
+        const { quizId } = req.params;
+        const { state } = req.body;
+        const brotherId = req.user?.userId;
+        const role = req.user?.role;
+
+        if (role !== UserRole.BROTHER) {
+            throw new ApiError({ statusCode: 403, message: "Forbidden: Only brothers can update quiz state" });
+        }
+
+        if (!quizId || !state) {
+            throw new ApiError({ statusCode: 400, message: "Missing required fields (quizId, state)" });
+        }
+
+        if (!Object.values(QuizState).includes(state)) {
+            throw new ApiError({ statusCode: 400, message: "Invalid quiz state" });
+        }
+
+        const updatedQuiz = await UpdateQuizStateService(quizId as string, String(brotherId), state as QuizState);
+
+        res.status(200).json({
+            success: true,
+            message: `Quiz state updated to ${state} successfully`,
+            data: updatedQuiz
         });
     } catch (error) {
         next(error);
