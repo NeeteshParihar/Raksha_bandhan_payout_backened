@@ -7,6 +7,7 @@ import { UserRole } from '../models/users.js';
 import { deleteCloudinaryFiles } from '../services/cloudinary.js';
 import { QuizActions, QuizStatus, QuizState } from '../models/quiz.js';
 import { deleteAllAttemptsOfQuizService } from '../services/attempt.js';
+import { deletePayoutByQuizIdService } from '../services/payout.js';
 
 export const createQuiz = async (req: IapiRequest, res: Response, next: NextFunction) => {
     try {
@@ -202,8 +203,9 @@ export const updateQuizStatus = async (req: IapiRequest, res: Response, next: Ne
 
         const userId = req.user?.userId;
         const role = req.user?.role;
-        const action: any = req.query.action;
+        let action: any = req.query.action;
         const quizId: any = req.params.quizId;
+        action = String(action).toUpperCase();
 
         let result: any;
 
@@ -214,6 +216,7 @@ export const updateQuizStatus = async (req: IapiRequest, res: Response, next: Ne
         } else if (action === QuizActions.RESET && role === UserRole.BROTHER) {
             result = await UpdateQuizStatusService(quizId, userId!, QuizStatus.PENDING);
             await deleteAllAttemptsOfQuizService(quizId as string);
+            await deletePayoutByQuizIdService(quizId as string);
         } else {
             throw new ApiError({ statusCode: 400, message: "User action is not valid" })
         }

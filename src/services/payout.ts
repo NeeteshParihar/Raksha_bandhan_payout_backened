@@ -127,3 +127,7 @@ export const getPayoutByIdService = async (payoutId: string, userId: string) => 
     quiz: payout.quizId,
   };
 };
+
+export const deletePayoutByQuizIdService = async (quizId: string) => {
+  return await Payout.deleteMany({ quizId });
+};
